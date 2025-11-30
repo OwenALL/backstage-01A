@@ -7173,6 +7173,126 @@ app.post('/api/finance-password/reset/:slot', async (c) => {
 // ========================================
 // 前端页面
 // ========================================
+// 股东/代理后台页面
+app.get('/agent.html', (c) => {
+  return c.html(`<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>股东/代理后台管理系统</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.10/dayjs.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#1e40af',
+            secondary: '#7c3aed',
+            success: '#059669',
+            warning: '#d97706',
+            danger: '#dc2626'
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+    .sidebar-item:hover {
+      background-color: rgba(30, 64, 175, 0.1);
+    }
+    .sidebar-item.active {
+      background-color: rgba(30, 64, 175, 0.15);
+      border-left: 4px solid #1e40af;
+    }
+    .chart-container {
+      position: relative;
+      height: 300px;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .fade-in {
+      animation: fadeIn 0.3s ease-out;
+    }
+  </style>
+</head>
+<body class="bg-gray-900 text-gray-100">
+  <div id="login-page" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900">
+    <div class="bg-gray-800 p-8 rounded-2xl shadow-2xl w-full max-w-md border border-gray-700">
+      <div class="text-center mb-8">
+        <div class="inline-block p-4 bg-primary rounded-full mb-4">
+          <i class="fas fa-user-tie text-4xl text-white"></i>
+        </div>
+        <h1 class="text-3xl font-bold text-white mb-2">股东/代理后台</h1>
+        <p class="text-gray-400">真人荷官视讯平台</p>
+      </div>
+      <form id="login-form" onsubmit="handleLogin(event)">
+        <div class="mb-6">
+          <label class="block text-gray-300 text-sm font-semibold mb-2">
+            <i class="fas fa-user mr-2"></i>账号
+          </label>
+          <input type="text" name="username" required
+                 class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary"
+                 placeholder="请输入股东/代理账号">
+        </div>
+        <div class="mb-6">
+          <label class="block text-gray-300 text-sm font-semibold mb-2">
+            <i class="fas fa-lock mr-2"></i>密码
+          </label>
+          <input type="password" name="password" required
+                 class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary"
+                 placeholder="请输入密码">
+        </div>
+        <button type="submit" class="w-full bg-primary hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition duration-200">
+          <i class="fas fa-sign-in-alt mr-2"></i>登录
+        </button>
+      </form>
+    </div>
+  </div>
+  <div id="main-page" class="hidden">
+    <nav class="bg-gray-800 border-b border-gray-700 px-6 py-4 flex items-center justify-between sticky top-0 z-40">
+      <div class="flex items-center space-x-4">
+        <i class="fas fa-user-tie text-2xl text-primary"></i>
+        <h1 class="text-xl font-bold" id="nav-title">股东后台</h1>
+      </div>
+      <div class="flex items-center space-x-6">
+        <div class="text-sm">
+          <span class="text-gray-400">账号：</span>
+          <span class="text-white font-semibold" id="current-username">-</span>
+        </div>
+        <div class="text-sm">
+          <span class="text-gray-400">角色：</span>
+          <span class="text-primary font-semibold" id="current-role">-</span>
+        </div>
+        <button onclick="handleLogout()" class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg text-sm transition">
+          <i class="fas fa-sign-out-alt mr-2"></i>退出
+        </button>
+      </div>
+    </nav>
+    <div class="flex">
+      <aside class="w-64 bg-gray-800 min-h-[calc(100vh-73px)] border-r border-gray-700">
+        <div class="p-4">
+          <div id="sidebar-menu"></div>
+        </div>
+      </aside>
+      <main class="flex-1 p-6 min-h-[calc(100vh-73px)] bg-gray-900">
+        <div id="main-content"></div>
+      </main>
+    </div>
+  </div>
+  <script src="/static/agent.js"></script>
+</body>
+</html>`)
+})
+
 app.get('*', (c) => {
   return c.html(`
 <!DOCTYPE html>
@@ -7406,17 +7526,23 @@ app.get('*', (c) => {
 // 股东/代理登录
 app.post('/api/agent/login', async (c) => {
   const db = c.env.DB
-  const { username, password } = await c.req.json()
+  const { agent_username, password } = await c.req.json()
   
   try {
     // 查询代理账号
     const agent = await db.prepare(`
-      SELECT id, agent_username, nickname, level, status, parent_agent_id, contact_phone, commission_ratio
+      SELECT id, agent_username, nickname, level, status, parent_agent_id, contact_phone, commission_ratio, password_hash
       FROM agents 
-      WHERE agent_username = ? AND password_hash = ?
-    `).bind(username, password).first() as any
+      WHERE agent_username = ?
+    `).bind(agent_username).first() as any
     
     if (!agent) {
+      return c.json({ success: false, error: '账号或密码错误' }, 401)
+    }
+    
+    // 验证密码
+    const passwordMatch = await verifyPassword(password, agent.password_hash)
+    if (!passwordMatch) {
       return c.json({ success: false, error: '账号或密码错误' }, 401)
     }
     

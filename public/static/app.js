@@ -6263,7 +6263,7 @@ async function renderReports(container) {
             <label class="text-gray-400 text-xs block mb-1">代理筛选</label>
             <select id="comp-agent" class="bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm w-40">
               <option value="">全部代理</option>
-              ${agents.map(a => \`<option value="\${a.id}">\${escapeHtml(a.agent_username)}</option>\`).join('')}
+              ${agents.map(a => `<option value="${a.id}">${escapeHtml(a.agent_username)}</option>`).join('')}
             </select>
           </div>
           <div>
@@ -6322,7 +6322,7 @@ async function renderReports(container) {
             <label class="text-gray-400 text-xs block mb-1">代理筛选</label>
             <select id="rank-agent" class="bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm w-40">
               <option value="">全部代理</option>
-              ${agents.map(a => \`<option value="\${a.id}">\${escapeHtml(a.agent_username)}</option>\`).join('')}
+              ${agents.map(a => `<option value="${a.id}">${escapeHtml(a.agent_username)}</option>`).join('')}
             </select>
           </div>
           <div>

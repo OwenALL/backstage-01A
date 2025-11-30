@@ -7643,6 +7643,273 @@ app.get('/api/agent/subordinates', async (c) => {
   }
 })
 
+// 股东/代理后台 - 获取单个代理详情 API
+app.get('/api/agent/subordinates/:id', async (c) => {
+  const db = c.env.DB
+  const agentId = getAgentIdFromToken(c)
+  const targetId = c.req.param('id')
+  
+  if (!agentId) {
+    return c.json({ success: false, error: '未登录' }, 401)
+  }
+  
+  try {
+    // 查询代理详情（只能查看自己的下级）
+    const agent = await db.prepare(`
+      SELECT id, agent_username as username, nickname as real_name, contact_phone as phone, 
+             contact_email as email, level, status, share_ratio, commission_ratio as commission_rate,
+             created_at, parent_agent_id
+      FROM agents 
+      WHERE id = ? AND parent_agent_id = ?
+    `).bind(targetId, agentId).first() as any
+    
+    if (!agent) {
+      return c.json({ success: false, error: '代理不存在或无权限查看' }, 404)
+    }
+    
+    // 查询下级统计
+    const subordinateCount = await db.prepare(`
+      SELECT COUNT(*) as count FROM agents WHERE parent_agent_id = ?
+    `).bind(targetId).first() as any
+    
+    const playerCount = await db.prepare(`
+      SELECT COUNT(*) as count FROM players WHERE agent_id = ?
+    `).bind(targetId).first() as any
+    
+    return c.json({
+      success: true,
+      data: {
+        ...agent,
+        subordinate_count: subordinateCount?.count || 0,
+        player_count: playerCount?.count || 0
+      }
+    })
+  } catch (error) {
+    console.error('Get agent detail error:', error)
+    return c.json({ success: false, error: String(error) }, 500)
+  }
+})
+
+// 股东/代理后台 - 更新代理信息 API
+app.put('/api/agent/subordinates/:id', async (c) => {
+  const db = c.env.DB
+  const agentId = getAgentIdFromToken(c)
+  const targetId = c.req.param('id')
+  
+  if (!agentId) {
+    return c.json({ success: false, error: '未登录' }, 401)
+  }
+  
+  try {
+    const body = await c.req.json()
+    const { real_name, contact_phone, contact_email, commission_ratio, share_ratio, status } = body
+    
+    // 验证是否有权限编辑（只能编辑自己的下级）
+    const existingAgent = await db.prepare(`
+      SELECT id FROM agents WHERE id = ? AND parent_agent_id = ?
+    `).bind(targetId, agentId).first()
+    
+    if (!existingAgent) {
+      return c.json({ success: false, error: '代理不存在或无权限编辑' }, 403)
+    }
+    
+    // 验证手机号格式（如果提供）
+    if (contact_phone && !/^1[3-9]\d{9}$/.test(contact_phone)) {
+      return c.json({ success: false, error: '手机号格式不正确' }, 400)
+    }
+    
+    // 更新代理信息
+    const updateFields = []
+    const params: any[] = []
+    
+    if (real_name !== undefined) {
+      updateFields.push('nickname = ?')
+      params.push(real_name)
+    }
+    if (contact_phone !== undefined) {
+      updateFields.push('contact_phone = ?')
+      params.push(contact_phone)
+    }
+    if (contact_email !== undefined) {
+      updateFields.push('contact_email = ?')
+      params.push(contact_email)
+    }
+    if (commission_ratio !== undefined) {
+      updateFields.push('commission_ratio = ?')
+      params.push(commission_ratio)
+    }
+    if (share_ratio !== undefined) {
+      updateFields.push('share_ratio = ?')
+      params.push(share_ratio)
+    }
+    if (status !== undefined) {
+      updateFields.push('status = ?')
+      params.push(status)
+    }
+    
+    if (updateFields.length === 0) {
+      return c.json({ success: false, error: '没有需要更新的字段' }, 400)
+    }
+    
+    params.push(targetId)
+    
+    await db.prepare(`
+      UPDATE agents SET ${updateFields.join(', ')} WHERE id = ?
+    `).bind(...params).run()
+    
+    return c.json({ success: true, message: '更新成功' })
+  } catch (error) {
+    console.error('Update agent error:', error)
+    return c.json({ success: false, error: String(error) }, 500)
+  }
+})
+
+// 股东/代理后台 - 获取单个玩家详情 API
+app.get('/api/agent/players/:id', async (c) => {
+  const db = c.env.DB
+  const agentId = getAgentIdFromToken(c)
+  const targetId = c.req.param('id')
+  
+  if (!agentId) {
+    return c.json({ success: false, error: '未登录' }, 401)
+  }
+  
+  try {
+    // 查询玩家详情（只能查看自己的下级玩家）
+    const player = await db.prepare(`
+      SELECT id, username, real_name, phone, email, 
+             CASE WHEN status = 1 THEN 'active' WHEN status = 0 THEN 'locked' ELSE 'unknown' END as status,
+             balance, vip_level, 0 as wash_rate, agent_id, created_at,
+             total_deposit, total_withdraw, total_bet, total_win_loss as total_win
+      FROM players 
+      WHERE id = ? AND agent_id = ?
+    `).bind(targetId, agentId).first() as any
+    
+    if (!player) {
+      return c.json({ success: false, error: '玩家不存在或无权限查看' }, 404)
+    }
+    
+    return c.json({
+      success: true,
+      data: player
+    })
+  } catch (error) {
+    console.error('Get player detail error:', error)
+    return c.json({ success: false, error: String(error) }, 500)
+  }
+})
+
+// 股东/代理后台 - 更新玩家信息 API
+app.put('/api/agent/players/:id', async (c) => {
+  const db = c.env.DB
+  const agentId = getAgentIdFromToken(c)
+  const targetId = c.req.param('id')
+  
+  if (!agentId) {
+    return c.json({ success: false, error: '未登录' }, 401)
+  }
+  
+  try {
+    const body = await c.req.json()
+    const { real_name, phone, email, wash_rate, status } = body
+    
+    // 验证是否有权限编辑（只能编辑自己的下级玩家）
+    const existingPlayer = await db.prepare(`
+      SELECT id FROM players WHERE id = ? AND agent_id = ?
+    `).bind(targetId, agentId).first()
+    
+    if (!existingPlayer) {
+      return c.json({ success: false, error: '玩家不存在或无权限编辑' }, 403)
+    }
+    
+    // 验证手机号格式（如果提供）
+    if (phone && !/^1[3-9]\d{9}$/.test(phone)) {
+      return c.json({ success: false, error: '手机号格式不正确' }, 400)
+    }
+    
+    // 更新玩家信息
+    const updateFields = []
+    const params: any[] = []
+    
+    if (real_name !== undefined) {
+      updateFields.push('real_name = ?')
+      params.push(real_name)
+    }
+    if (phone !== undefined) {
+      updateFields.push('phone = ?')
+      params.push(phone)
+    }
+    if (email !== undefined) {
+      updateFields.push('email = ?')
+      params.push(email)
+    }
+    // wash_rate字段暂不支持（表中没有此字段）
+    if (status !== undefined) {
+      // 状态转换: 'active' -> 1, 'locked' -> 0
+      const statusValue = status === 'active' ? 1 : 0
+      updateFields.push('status = ?')
+      params.push(statusValue)
+    }
+    
+    if (updateFields.length === 0) {
+      return c.json({ success: false, error: '没有需要更新的字段' }, 400)
+    }
+    
+    params.push(targetId)
+    
+    await db.prepare(`
+      UPDATE players SET ${updateFields.join(', ')} WHERE id = ?
+    `).bind(...params).run()
+    
+    return c.json({ success: true, message: '更新成功' })
+  } catch (error) {
+    console.error('Update player error:', error)
+    return c.json({ success: false, error: String(error) }, 500)
+  }
+})
+
+// 股东/代理后台 - 获取佣金详情 API
+app.get('/api/agent/commission/:id', async (c) => {
+  const db = c.env.DB
+  const agentId = getAgentIdFromToken(c)
+  const commissionId = c.req.param('id')
+  
+  if (!agentId) {
+    return c.json({ success: false, error: '未登录' }, 401)
+  }
+  
+  try {
+    // Mock数据 - 实际应从佣金记录表查询
+    const commission = {
+      id: commissionId,
+      period: '2024-11',
+      agent_id: agentId,
+      agent_username: 'agent01',
+      total_bet: 1250000,
+      total_profit: 125000,
+      commission_rate: 0.35,
+      commission_amount: 43750,
+      status: 'settled',
+      created_at: '2024-11-01 00:00:00',
+      settled_at: '2024-12-01 10:30:00',
+      // 明细数据
+      details: [
+        { date: '2024-11-01', bet: 45000, profit: 4500, commission: 1575 },
+        { date: '2024-11-02', bet: 38000, profit: 3800, commission: 1330 },
+        { date: '2024-11-03', bet: 52000, profit: 5200, commission: 1820 }
+      ]
+    }
+    
+    return c.json({
+      success: true,
+      data: commission
+    })
+  } catch (error) {
+    console.error('Get commission detail error:', error)
+    return c.json({ success: false, error: String(error) }, 500)
+  }
+})
+
 // ========================================
 // 前端页面
 // ========================================

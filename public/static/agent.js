@@ -724,23 +724,584 @@ function searchPlayers() {
 }
 
 // 查看代理详情
-function viewAgentDetail(id) {
-  showToast('查看代理详情功能开发中...', 'info');
+async function viewAgentDetail(id) {
+  try {
+    const response = await fetch(`/api/agent/subordinates/${id}`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('agent_token')}`
+      }
+    });
+    
+    const result = await response.json();
+    
+    if (!result.success) {
+      showToast(result.error || '获取代理详情失败', 'error');
+      return;
+    }
+    
+    const agent = result.data;
+    
+    // 创建详情模态框
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 fade-in';
+    modal.innerHTML = `
+      <div class="bg-gray-800 rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between mb-6">
+          <h3 class="text-2xl font-bold text-white">
+            <i class="fas fa-user-tie text-primary mr-2"></i>代理详情
+          </h3>
+          <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-white text-2xl">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        
+        <div class="space-y-6">
+          <!-- 基本信息 -->
+          <div class="bg-gray-700 rounded-lg p-4">
+            <h4 class="text-lg font-semibold text-white mb-4 flex items-center">
+              <i class="fas fa-info-circle text-primary mr-2"></i>基本信息
+            </h4>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-gray-400 text-sm mb-1">代理账号</label>
+                <div class="text-white font-medium">${agent.username}</div>
+              </div>
+              <div>
+                <label class="block text-gray-400 text-sm mb-1">真实姓名</label>
+                <div class="text-white font-medium">${agent.real_name || '-'}</div>
+              </div>
+              <div>
+                <label class="block text-gray-400 text-sm mb-1">联系电话</label>
+                <div class="text-white font-medium">${agent.phone || '-'}</div>
+              </div>
+              <div>
+                <label class="block text-gray-400 text-sm mb-1">联系邮箱</label>
+                <div class="text-white font-medium">${agent.email || '-'}</div>
+              </div>
+              <div>
+                <label class="block text-gray-400 text-sm mb-1">代理级别</label>
+                <div class="text-white font-medium">
+                  ${agent.level === 'shareholder' ? '股东' : agent.level === 'general_agent' ? '总代理' : '代理'}
+                </div>
+              </div>
+              <div>
+                <label class="block text-gray-400 text-sm mb-1">账号状态</label>
+                <div>
+                  ${agent.status == 1 
+                    ? '<span class="px-2 py-1 bg-green-600 text-white text-xs rounded">正常</span>'
+                    : '<span class="px-2 py-1 bg-red-600 text-white text-xs rounded">禁用</span>'
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 比例设置 -->
+          <div class="bg-gray-700 rounded-lg p-4">
+            <h4 class="text-lg font-semibold text-white mb-4 flex items-center">
+              <i class="fas fa-percentage text-primary mr-2"></i>比例设置
+            </h4>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-gray-400 text-sm mb-1">占成比例</label>
+                <div class="text-white font-medium">${agent.share_ratio || 0}%</div>
+              </div>
+              <div>
+                <label class="block text-gray-400 text-sm mb-1">佣金比例</label>
+                <div class="text-white font-medium">${agent.commission_rate || 0}%</div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 团队统计 -->
+          <div class="bg-gray-700 rounded-lg p-4">
+            <h4 class="text-lg font-semibold text-white mb-4 flex items-center">
+              <i class="fas fa-chart-bar text-primary mr-2"></i>团队统计
+            </h4>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-gray-400 text-sm mb-1">下级代理数</label>
+                <div class="text-2xl font-bold text-primary">${agent.subordinate_count || 0}</div>
+              </div>
+              <div>
+                <label class="block text-gray-400 text-sm mb-1">下级玩家数</label>
+                <div class="text-2xl font-bold text-green-400">${agent.player_count || 0}</div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 创建时间 -->
+          <div class="bg-gray-700 rounded-lg p-4">
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-gray-400 text-sm mb-1">创建时间</label>
+                <div class="text-white font-medium">${agent.created_at || '-'}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="mt-6 flex justify-end space-x-3">
+          <button onclick="this.closest('.fixed').remove()" class="px-6 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition">
+            关闭
+          </button>
+          <button onclick="this.closest('.fixed').remove(); editAgent(${id})" class="px-6 py-2 bg-primary hover:bg-blue-700 text-white rounded-lg transition">
+            <i class="fas fa-edit mr-2"></i>编辑
+          </button>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+  } catch (error) {
+    console.error('View agent detail error:', error);
+    showToast('获取代理详情失败', 'error');
+  }
 }
 
 // 编辑代理
-function editAgent(id) {
-  showToast('编辑代理功能开发中...', 'info');
+async function editAgent(id) {
+  try {
+    // 先获取代理详情
+    const response = await fetch(`/api/agent/subordinates/${id}`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('agent_token')}`
+      }
+    });
+    
+    const result = await response.json();
+    
+    if (!result.success) {
+      showToast(result.error || '获取代理信息失败', 'error');
+      return;
+    }
+    
+    const agent = result.data;
+    
+    // 创建编辑模态框
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 fade-in';
+    modal.innerHTML = `
+      <div class="bg-gray-800 rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between mb-6">
+          <h3 class="text-2xl font-bold text-white">
+            <i class="fas fa-edit text-primary mr-2"></i>编辑代理
+          </h3>
+          <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-white text-2xl">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        
+        <form id="editAgentForm" class="space-y-4">
+          <div class="grid grid-cols-2 gap-4">
+            <div class="col-span-2">
+              <label class="block text-gray-300 text-sm mb-2">代理账号</label>
+              <input type="text" value="${agent.username}" disabled 
+                     class="w-full px-4 py-2 bg-gray-700 text-gray-400 border border-gray-600 rounded-lg cursor-not-allowed">
+              <p class="text-xs text-gray-500 mt-1">账号不可修改</p>
+            </div>
+            
+            <div>
+              <label class="block text-gray-300 text-sm mb-2">真实姓名 <span class="text-red-500">*</span></label>
+              <input type="text" name="real_name" value="${agent.real_name || ''}" required
+                     class="w-full px-4 py-2 bg-gray-700 text-white border border-gray-600 rounded-lg focus:border-primary focus:outline-none"
+                     placeholder="请输入真实姓名">
+            </div>
+            
+            <div>
+              <label class="block text-gray-300 text-sm mb-2">联系电话</label>
+              <input type="tel" name="contact_phone" value="${agent.phone || ''}"
+                     class="w-full px-4 py-2 bg-gray-700 text-white border border-gray-600 rounded-lg focus:border-primary focus:outline-none"
+                     placeholder="选填" pattern="^1[3-9]\\d{9}$">
+              <p class="text-xs text-gray-500 mt-1">格式：11位手机号</p>
+            </div>
+            
+            <div class="col-span-2">
+              <label class="block text-gray-300 text-sm mb-2">联系邮箱</label>
+              <input type="email" name="contact_email" value="${agent.email || ''}"
+                     class="w-full px-4 py-2 bg-gray-700 text-white border border-gray-600 rounded-lg focus:border-primary focus:outline-none"
+                     placeholder="选填">
+            </div>
+            
+            <div>
+              <label class="block text-gray-300 text-sm mb-2">占成比例 (%)</label>
+              <input type="number" name="share_ratio" value="${agent.share_ratio || 0}" 
+                     min="0" max="100" step="0.01"
+                     class="w-full px-4 py-2 bg-gray-700 text-white border border-gray-600 rounded-lg focus:border-primary focus:outline-none"
+                     placeholder="0-100">
+            </div>
+            
+            <div>
+              <label class="block text-gray-300 text-sm mb-2">佣金比例 (%)</label>
+              <input type="number" name="commission_ratio" value="${agent.commission_rate || 0}" 
+                     min="0" max="100" step="0.01"
+                     class="w-full px-4 py-2 bg-gray-700 text-white border border-gray-600 rounded-lg focus:border-primary focus:outline-none"
+                     placeholder="0-100">
+            </div>
+            
+            <div class="col-span-2">
+              <label class="block text-gray-300 text-sm mb-2">账号状态</label>
+              <select name="status" class="w-full px-4 py-2 bg-gray-700 text-white border border-gray-600 rounded-lg focus:border-primary focus:outline-none">
+                <option value="1" ${agent.status == 1 ? 'selected' : ''}>正常</option>
+                <option value="0" ${agent.status == 0 ? 'selected' : ''}>禁用</option>
+              </select>
+            </div>
+          </div>
+          
+          <div class="flex justify-end space-x-3 pt-4">
+            <button type="button" onclick="this.closest('.fixed').remove()" 
+                    class="px-6 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition">
+              取消
+            </button>
+            <button type="submit" 
+                    class="px-6 py-2 bg-primary hover:bg-blue-700 text-white rounded-lg transition">
+              <i class="fas fa-save mr-2"></i>保存
+            </button>
+          </div>
+        </form>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // 表单提交
+    document.getElementById('editAgentForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const formData = new FormData(e.target);
+      const data = {
+        real_name: formData.get('real_name'),
+        contact_phone: formData.get('contact_phone'),
+        contact_email: formData.get('contact_email'),
+        share_ratio: parseFloat(formData.get('share_ratio')),
+        commission_ratio: parseFloat(formData.get('commission_ratio')),
+        status: parseInt(formData.get('status'))
+      };
+      
+      try {
+        const updateResponse = await fetch(`/api/agent/subordinates/${id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('agent_token')}`
+          },
+          body: JSON.stringify(data)
+        });
+        
+        const updateResult = await updateResponse.json();
+        
+        if (updateResult.success) {
+          showToast('更新成功', 'success');
+          modal.remove();
+          // 刷新列表
+          if (typeof loadSubordinates === 'function') {
+            loadSubordinates(1);
+          }
+        } else {
+          showToast(updateResult.error || '更新失败', 'error');
+        }
+      } catch (error) {
+        console.error('Update agent error:', error);
+        showToast('更新失败', 'error');
+      }
+    });
+  } catch (error) {
+    console.error('Edit agent error:', error);
+    showToast('获取代理信息失败', 'error');
+  }
 }
 
 // 查看玩家详情
-function viewPlayerDetail(id) {
-  showToast('查看玩家详情功能开发中...', 'info');
+async function viewPlayerDetail(id) {
+  try {
+    const response = await fetch(`/api/agent/players/${id}`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('agent_token')}`
+      }
+    });
+    
+    const result = await response.json();
+    
+    if (!result.success) {
+      showToast(result.error || '获取玩家详情失败', 'error');
+      return;
+    }
+    
+    const player = result.data;
+    
+    // 创建详情模态框
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 fade-in';
+    modal.innerHTML = `
+      <div class="bg-gray-800 rounded-lg p-6 max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between mb-6">
+          <h3 class="text-2xl font-bold text-white">
+            <i class="fas fa-user text-primary mr-2"></i>玩家详情
+          </h3>
+          <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-white text-2xl">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        
+        <div class="space-y-6">
+          <!-- 基本信息 -->
+          <div class="bg-gray-700 rounded-lg p-4">
+            <h4 class="text-lg font-semibold text-white mb-4 flex items-center">
+              <i class="fas fa-info-circle text-primary mr-2"></i>基本信息
+            </h4>
+            <div class="grid grid-cols-3 gap-4">
+              <div>
+                <label class="block text-gray-400 text-sm mb-1">玩家账号</label>
+                <div class="text-white font-medium">${player.username}</div>
+              </div>
+              <div>
+                <label class="block text-gray-400 text-sm mb-1">真实姓名</label>
+                <div class="text-white font-medium">${player.real_name || '-'}</div>
+              </div>
+              <div>
+                <label class="block text-gray-400 text-sm mb-1">联系电话</label>
+                <div class="text-white font-medium">${player.phone || '-'}</div>
+              </div>
+              <div>
+                <label class="block text-gray-400 text-sm mb-1">联系邮箱</label>
+                <div class="text-white font-medium">${player.email || '-'}</div>
+              </div>
+              <div>
+                <label class="block text-gray-400 text-sm mb-1">VIP等级</label>
+                <div class="text-white font-medium">VIP ${player.vip_level || 0}</div>
+              </div>
+              <div>
+                <label class="block text-gray-400 text-sm mb-1">账号状态</label>
+                <div>
+                  ${player.status === 'active' 
+                    ? '<span class="px-2 py-1 bg-green-600 text-white text-xs rounded">活跃</span>'
+                    : player.status === 'locked'
+                    ? '<span class="px-2 py-1 bg-red-600 text-white text-xs rounded">锁定</span>'
+                    : '<span class="px-2 py-1 bg-gray-600 text-white text-xs rounded">未知</span>'
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 账户信息 -->
+          <div class="bg-gray-700 rounded-lg p-4">
+            <h4 class="text-lg font-semibold text-white mb-4 flex items-center">
+              <i class="fas fa-wallet text-primary mr-2"></i>账户信息
+            </h4>
+            <div class="grid grid-cols-3 gap-4">
+              <div>
+                <label class="block text-gray-400 text-sm mb-1">当前余额</label>
+                <div class="text-2xl font-bold text-green-400">¥${(player.balance || 0).toLocaleString()}</div>
+              </div>
+              <div>
+                <label class="block text-gray-400 text-sm mb-1">累计充值</label>
+                <div class="text-xl font-semibold text-blue-400">¥${(player.total_deposit || 0).toLocaleString()}</div>
+              </div>
+              <div>
+                <label class="block text-gray-400 text-sm mb-1">累计提现</label>
+                <div class="text-xl font-semibold text-orange-400">¥${(player.total_withdraw || 0).toLocaleString()}</div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 游戏统计 -->
+          <div class="bg-gray-700 rounded-lg p-4">
+            <h4 class="text-lg font-semibold text-white mb-4 flex items-center">
+              <i class="fas fa-chart-line text-primary mr-2"></i>游戏统计
+            </h4>
+            <div class="grid grid-cols-3 gap-4">
+              <div>
+                <label class="block text-gray-400 text-sm mb-1">累计投注</label>
+                <div class="text-xl font-semibold text-purple-400">¥${(player.total_bet || 0).toLocaleString()}</div>
+              </div>
+              <div>
+                <label class="block text-gray-400 text-sm mb-1">累计盈利</label>
+                <div class="text-xl font-semibold ${(player.total_win || 0) >= 0 ? 'text-green-400' : 'text-red-400'}">
+                  ¥${(player.total_win || 0).toLocaleString()}
+                </div>
+              </div>
+              <div>
+                <label class="block text-gray-400 text-sm mb-1">洗码率</label>
+                <div class="text-xl font-semibold text-yellow-400">${player.wash_rate || 0}%</div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 其他信息 -->
+          <div class="bg-gray-700 rounded-lg p-4">
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-gray-400 text-sm mb-1">注册时间</label>
+                <div class="text-white font-medium">${player.created_at || '-'}</div>
+              </div>
+              <div>
+                <label class="block text-gray-400 text-sm mb-1">所属代理ID</label>
+                <div class="text-white font-medium">${player.agent_id || '-'}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="mt-6 flex justify-end space-x-3">
+          <button onclick="this.closest('.fixed').remove()" class="px-6 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition">
+            关闭
+          </button>
+          <button onclick="this.closest('.fixed').remove(); editPlayer(${id})" class="px-6 py-2 bg-primary hover:bg-blue-700 text-white rounded-lg transition">
+            <i class="fas fa-edit mr-2"></i>编辑
+          </button>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+  } catch (error) {
+    console.error('View player detail error:', error);
+    showToast('获取玩家详情失败', 'error');
+  }
 }
 
 // 编辑玩家
-function editPlayer(id) {
-  showToast('编辑玩家功能开发中...', 'info');
+async function editPlayer(id) {
+  try {
+    // 先获取玩家详情
+    const response = await fetch(`/api/agent/players/${id}`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('agent_token')}`
+      }
+    });
+    
+    const result = await response.json();
+    
+    if (!result.success) {
+      showToast(result.error || '获取玩家信息失败', 'error');
+      return;
+    }
+    
+    const player = result.data;
+    
+    // 创建编辑模态框
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 fade-in';
+    modal.innerHTML = `
+      <div class="bg-gray-800 rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between mb-6">
+          <h3 class="text-2xl font-bold text-white">
+            <i class="fas fa-edit text-primary mr-2"></i>编辑玩家
+          </h3>
+          <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-white text-2xl">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        
+        <form id="editPlayerForm" class="space-y-4">
+          <div class="grid grid-cols-2 gap-4">
+            <div class="col-span-2">
+              <label class="block text-gray-300 text-sm mb-2">玩家账号</label>
+              <input type="text" value="${player.username}" disabled 
+                     class="w-full px-4 py-2 bg-gray-700 text-gray-400 border border-gray-600 rounded-lg cursor-not-allowed">
+              <p class="text-xs text-gray-500 mt-1">账号不可修改</p>
+            </div>
+            
+            <div>
+              <label class="block text-gray-300 text-sm mb-2">真实姓名 <span class="text-red-500">*</span></label>
+              <input type="text" name="real_name" value="${player.real_name || ''}" required
+                     class="w-full px-4 py-2 bg-gray-700 text-white border border-gray-600 rounded-lg focus:border-primary focus:outline-none"
+                     placeholder="请输入真实姓名">
+            </div>
+            
+            <div>
+              <label class="block text-gray-300 text-sm mb-2">联系电话</label>
+              <input type="tel" name="phone" value="${player.phone || ''}"
+                     class="w-full px-4 py-2 bg-gray-700 text-white border border-gray-600 rounded-lg focus:border-primary focus:outline-none"
+                     placeholder="选填" pattern="^1[3-9]\\d{9}$">
+              <p class="text-xs text-gray-500 mt-1">格式：11位手机号</p>
+            </div>
+            
+            <div class="col-span-2">
+              <label class="block text-gray-300 text-sm mb-2">联系邮箱</label>
+              <input type="email" name="email" value="${player.email || ''}"
+                     class="w-full px-4 py-2 bg-gray-700 text-white border border-gray-600 rounded-lg focus:border-primary focus:outline-none"
+                     placeholder="选填">
+            </div>
+            
+            <div>
+              <label class="block text-gray-300 text-sm mb-2">洗码率 (%)</label>
+              <input type="number" name="wash_rate" value="${player.wash_rate || 0}" 
+                     min="0" max="100" step="0.01"
+                     class="w-full px-4 py-2 bg-gray-700 text-white border border-gray-600 rounded-lg focus:border-primary focus:outline-none"
+                     placeholder="0-100">
+            </div>
+            
+            <div>
+              <label class="block text-gray-300 text-sm mb-2">账号状态</label>
+              <select name="status" class="w-full px-4 py-2 bg-gray-700 text-white border border-gray-600 rounded-lg focus:border-primary focus:outline-none">
+                <option value="active" ${player.status === 'active' ? 'selected' : ''}>活跃</option>
+                <option value="locked" ${player.status === 'locked' ? 'selected' : ''}>锁定</option>
+              </select>
+            </div>
+          </div>
+          
+          <div class="flex justify-end space-x-3 pt-4">
+            <button type="button" onclick="this.closest('.fixed').remove()" 
+                    class="px-6 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition">
+              取消
+            </button>
+            <button type="submit" 
+                    class="px-6 py-2 bg-primary hover:bg-blue-700 text-white rounded-lg transition">
+              <i class="fas fa-save mr-2"></i>保存
+            </button>
+          </div>
+        </form>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // 表单提交
+    document.getElementById('editPlayerForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const formData = new FormData(e.target);
+      const data = {
+        real_name: formData.get('real_name'),
+        phone: formData.get('phone'),
+        email: formData.get('email'),
+        wash_rate: parseFloat(formData.get('wash_rate')),
+        status: formData.get('status')
+      };
+      
+      try {
+        const updateResponse = await fetch(`/api/agent/players/${id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('agent_token')}`
+          },
+          body: JSON.stringify(data)
+        });
+        
+        const updateResult = await updateResponse.json();
+        
+        if (updateResult.success) {
+          showToast('更新成功', 'success');
+          modal.remove();
+          // 刷新列表
+          if (typeof loadPlayers === 'function') {
+            loadPlayers(1);
+          }
+        } else {
+          showToast(updateResult.error || '更新失败', 'error');
+        }
+      } catch (error) {
+        console.error('Update player error:', error);
+        showToast('更新失败', 'error');
+      }
+    });
+  } catch (error) {
+    console.error('Edit player error:', error);
+    showToast('获取玩家信息失败', 'error');
+  }
 }
 
 // 渲染下级代理管理
@@ -1405,7 +1966,7 @@ async function loadTeamReport(page = 1) {
       tbody.innerHTML = data.list.map(item => `
         <tr class="border-t border-gray-700 hover:bg-gray-750">
           <td class="px-6 py-4">
-            <div class="font-medium">${escapeHtml(item.username)}</div>
+            <div class="font-medium">${makeAccountClickable(item.username, item.id, item.type)}</div>
           </td>
           <td class="px-6 py-4">${escapeHtml(item.real_name || '-')}</td>
           <td class="px-6 py-4">
@@ -1448,7 +2009,18 @@ function exportTeamReport() {
 
 // 查看报表详情
 function viewReportDetail(id, type) {
-  showToast(`查看${type === 'agent' ? '代理' : '会员'}详情功能开发中...`, 'info');
+  if (type === 'agent') {
+    viewAgentDetail(id);
+  } else {
+    viewPlayerDetail(id);
+  }
+}
+
+// 使账号可点击 - 全站通用函数
+function makeAccountClickable(username, id, type) {
+  const escapedUsername = escapeHtml(username);
+  const clickAction = type === 'agent' ? `viewAgentDetail(${id})` : `viewPlayerDetail(${id})`;
+  return `<span class="text-blue-400 hover:text-blue-300 cursor-pointer hover:underline" onclick="${clickAction}">${escapedUsername}</span>`;
 }
 
 // 显示新增代理弹窗
@@ -1503,7 +2075,7 @@ async function loadCommission(page = 1) {
         <tr class="border-t border-gray-700 hover:bg-gray-750">
           <td class="px-6 py-4 text-gray-300">${formatDate(item.date)}</td>
           <td class="px-6 py-4">
-            <div class="font-medium">${escapeHtml(item.target_username)}</div>
+            <div class="font-medium">${makeAccountClickable(item.target_username, item.target_id, item.target_type)}</div>
             <div class="text-sm text-gray-400">${escapeHtml(item.target_name || '-')}</div>
           </td>
           <td class="px-6 py-4">
@@ -1549,8 +2121,162 @@ function exportCommission() {
 }
 
 // 查看佣金详情
-function viewCommissionDetail(id) {
-  showToast('查看佣金详情功能开发中...', 'info');
+async function viewCommissionDetail(id) {
+  try {
+    const response = await fetch(`/api/agent/commission/${id}`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('agent_token')}`
+      }
+    });
+    
+    const result = await response.json();
+    
+    if (!result.success) {
+      showToast(result.error || '获取佣金详情失败', 'error');
+      return;
+    }
+    
+    const commission = result.data;
+    
+    // 创建详情模态框
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 fade-in';
+    modal.innerHTML = `
+      <div class="bg-gray-800 rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between mb-6">
+          <h3 class="text-2xl font-bold text-white">
+            <i class="fas fa-file-invoice-dollar text-primary mr-2"></i>佣金详情
+          </h3>
+          <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-white text-2xl">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        
+        <div class="space-y-6">
+          <!-- 基本信息 -->
+          <div class="bg-gray-700 rounded-lg p-4">
+            <h4 class="text-lg font-semibold text-white mb-4 flex items-center">
+              <i class="fas fa-info-circle text-primary mr-2"></i>基本信息
+            </h4>
+            <div class="grid grid-cols-4 gap-4">
+              <div>
+                <label class="block text-gray-400 text-sm mb-1">结算周期</label>
+                <div class="text-white font-medium">${commission.period}</div>
+              </div>
+              <div>
+                <label class="block text-gray-400 text-sm mb-1">代理账号</label>
+                <div class="text-white font-medium">${commission.agent_username}</div>
+              </div>
+              <div>
+                <label class="block text-gray-400 text-sm mb-1">结算状态</label>
+                <div>
+                  ${commission.status === 'settled' 
+                    ? '<span class="px-2 py-1 bg-green-600 text-white text-xs rounded">已结算</span>'
+                    : commission.status === 'pending'
+                    ? '<span class="px-2 py-1 bg-yellow-600 text-white text-xs rounded">待结算</span>'
+                    : '<span class="px-2 py-1 bg-gray-600 text-white text-xs rounded">未知</span>'
+                  }
+                </div>
+              </div>
+              <div>
+                <label class="block text-gray-400 text-sm mb-1">佣金比例</label>
+                <div class="text-white font-medium">${(commission.commission_rate * 100).toFixed(2)}%</div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 统计数据 -->
+          <div class="bg-gray-700 rounded-lg p-4">
+            <h4 class="text-lg font-semibold text-white mb-4 flex items-center">
+              <i class="fas fa-chart-bar text-primary mr-2"></i>统计数据
+            </h4>
+            <div class="grid grid-cols-3 gap-4">
+              <div class="text-center">
+                <label class="block text-gray-400 text-sm mb-2">总投注额</label>
+                <div class="text-3xl font-bold text-blue-400">¥${commission.total_bet.toLocaleString()}</div>
+              </div>
+              <div class="text-center">
+                <label class="block text-gray-400 text-sm mb-2">总盈利</label>
+                <div class="text-3xl font-bold text-green-400">¥${commission.total_profit.toLocaleString()}</div>
+              </div>
+              <div class="text-center">
+                <label class="block text-gray-400 text-sm mb-2">佣金金额</label>
+                <div class="text-3xl font-bold text-yellow-400">¥${commission.commission_amount.toLocaleString()}</div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 时间信息 -->
+          <div class="bg-gray-700 rounded-lg p-4">
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-gray-400 text-sm mb-1">创建时间</label>
+                <div class="text-white font-medium">${commission.created_at}</div>
+              </div>
+              <div>
+                <label class="block text-gray-400 text-sm mb-1">结算时间</label>
+                <div class="text-white font-medium">${commission.settled_at || '-'}</div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 每日明细 -->
+          <div class="bg-gray-700 rounded-lg p-4">
+            <h4 class="text-lg font-semibold text-white mb-4 flex items-center">
+              <i class="fas fa-list text-primary mr-2"></i>每日明细
+            </h4>
+            <div class="overflow-x-auto">
+              <table class="w-full">
+                <thead>
+                  <tr class="border-b border-gray-600">
+                    <th class="text-left text-gray-300 py-2 px-4">日期</th>
+                    <th class="text-right text-gray-300 py-2 px-4">投注额</th>
+                    <th class="text-right text-gray-300 py-2 px-4">盈利</th>
+                    <th class="text-right text-gray-300 py-2 px-4">佣金</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${commission.details.map(detail => `
+                    <tr class="border-b border-gray-600 hover:bg-gray-600">
+                      <td class="text-left text-white py-2 px-4">${detail.date}</td>
+                      <td class="text-right text-white py-2 px-4">¥${detail.bet.toLocaleString()}</td>
+                      <td class="text-right text-green-400 py-2 px-4">¥${detail.profit.toLocaleString()}</td>
+                      <td class="text-right text-yellow-400 py-2 px-4 font-semibold">¥${detail.commission.toLocaleString()}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+                <tfoot>
+                  <tr class="border-t-2 border-gray-500">
+                    <td class="text-left text-white py-3 px-4 font-bold">合计</td>
+                    <td class="text-right text-white py-3 px-4 font-bold">
+                      ¥${commission.details.reduce((sum, d) => sum + d.bet, 0).toLocaleString()}
+                    </td>
+                    <td class="text-right text-green-400 py-3 px-4 font-bold">
+                      ¥${commission.details.reduce((sum, d) => sum + d.profit, 0).toLocaleString()}
+                    </td>
+                    <td class="text-right text-yellow-400 py-3 px-4 font-bold">
+                      ¥${commission.details.reduce((sum, d) => sum + d.commission, 0).toLocaleString()}
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+        </div>
+        
+        <div class="mt-6 flex justify-end">
+          <button onclick="this.closest('.fixed').remove()" class="px-6 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition">
+            关闭
+          </button>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+  } catch (error) {
+    console.error('View commission detail error:', error);
+    showToast('获取佣金详情失败', 'error');
+  }
 }
 
 // ========================================

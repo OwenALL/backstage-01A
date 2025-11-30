@@ -1983,7 +1983,7 @@ function renderCommission() {
       
       <!-- 搜索查询栏 -->
       <div class="bg-gray-800 rounded-xl p-6 mb-6 border border-gray-700">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           <div>
             <label class="block text-sm text-gray-400 mb-2">开始日期</label>
             <input type="date" id="commission-start-date" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-primary">
@@ -2004,14 +2004,6 @@ function renderCommission() {
               <option value="player">下级会员</option>
             </select>
           </div>
-          <div>
-            <label class="block text-sm text-gray-400 mb-2">结算状态</label>
-            <select id="commission-status" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-primary">
-              <option value="">全部</option>
-              <option value="pending">待结算</option>
-              <option value="settled">已结算</option>
-            </select>
-          </div>
           <div class="flex items-end space-x-2">
             <button onclick="searchCommission()" class="flex-1 bg-primary hover:bg-blue-700 px-4 py-2 rounded-lg transition">
               <i class="fas fa-search mr-2"></i>查询
@@ -2024,14 +2016,14 @@ function renderCommission() {
       </div>
       
       <!-- 佣金汇总统计 -->
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         <div class="bg-gradient-to-br from-purple-600 to-purple-700 rounded-xl p-6 text-white">
           <div class="flex items-center justify-between mb-2">
             <span class="text-sm opacity-90">累计佣金</span>
             <i class="fas fa-coins text-2xl opacity-75"></i>
           </div>
           <div class="text-2xl font-bold" id="commission-total">¥0.00</div>
-          <div class="text-sm opacity-75 mt-2">包含所有已结算佣金</div>
+          <div class="text-sm opacity-75 mt-2">所有佣金总额</div>
         </div>
         <div class="bg-gradient-to-br from-green-600 to-green-700 rounded-xl p-6 text-white">
           <div class="flex items-center justify-between mb-2">
@@ -2040,14 +2032,6 @@ function renderCommission() {
           </div>
           <div class="text-2xl font-bold" id="commission-month">¥0.00</div>
           <div class="text-sm opacity-75 mt-2">当月累计佣金收入</div>
-        </div>
-        <div class="bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl p-6 text-white">
-          <div class="flex items-center justify-between mb-2">
-            <span class="text-sm opacity-90">待结算</span>
-            <i class="fas fa-hourglass-half text-2xl opacity-75"></i>
-          </div>
-          <div class="text-2xl font-bold" id="commission-pending">¥0.00</div>
-          <div class="text-sm opacity-75 mt-2">等待结算的佣金</div>
         </div>
         <div class="bg-gradient-to-br from-orange-600 to-orange-700 rounded-xl p-6 text-white">
           <div class="flex items-center justify-between mb-2">
@@ -2073,13 +2057,12 @@ function renderCommission() {
               <th class="px-6 py-4 text-left text-sm font-semibold">洗码费</th>
               <th class="px-6 py-4 text-left text-sm font-semibold">占成比例</th>
               <th class="px-6 py-4 text-left text-sm font-semibold">佣金金额</th>
-              <th class="px-6 py-4 text-left text-sm font-semibold">状态</th>
               <th class="px-6 py-4 text-left text-sm font-semibold">操作</th>
             </tr>
           </thead>
           <tbody id="commission-table-body">
             <tr>
-              <td colspan="11" class="px-6 py-12 text-center text-gray-400">
+              <td colspan="10" class="px-6 py-12 text-center text-gray-400">
                 <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
                 <div>加载中...</div>
               </td>
@@ -2259,9 +2242,8 @@ async function loadCommission(page = 1) {
     const endDate = document.getElementById('commission-end-date')?.value || '';
     const search = document.getElementById('commission-search')?.value || '';
     const role = document.getElementById('commission-role')?.value || '';
-    const status = document.getElementById('commission-status')?.value || '';
     
-    const result = await api(`/api/agent/commission?page=${page}&start_date=${startDate}&end_date=${endDate}&search=${search}&role=${role}&status=${status}`);
+    const result = await api(`/api/agent/commission?page=${page}&start_date=${startDate}&end_date=${endDate}&search=${search}&role=${role}`);
     
     if (result.success) {
       const data = result.data;
@@ -2269,7 +2251,6 @@ async function loadCommission(page = 1) {
       // 更新统计数据
       document.getElementById('commission-total').textContent = '¥' + formatMoney(data.summary.total);
       document.getElementById('commission-month').textContent = '¥' + formatMoney(data.summary.month);
-      document.getElementById('commission-pending').textContent = '¥' + formatMoney(data.summary.pending);
       document.getElementById('commission-today').textContent = '¥' + formatMoney(data.summary.today);
       
       // 渲染表格
@@ -2277,7 +2258,7 @@ async function loadCommission(page = 1) {
       if (data.list.length === 0) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="11" class="px-6 py-12 text-center text-gray-400">
+            <td colspan="10" class="px-6 py-12 text-center text-gray-400">
               <i class="fas fa-inbox text-4xl mb-2"></i>
               <div>暂无数据</div>
             </td>
@@ -2308,11 +2289,6 @@ async function loadCommission(page = 1) {
           <td class="px-6 py-4 text-orange-400">¥${formatMoney(item.wash_code_fee)}</td>
           <td class="px-6 py-4 text-purple-400">${item.share_ratio}%</td>
           <td class="px-6 py-4 text-green-400 font-bold">¥${formatMoney(item.commission_amount)}</td>
-          <td class="px-6 py-4">
-            ${item.status === 'settled' 
-              ? '<span class="px-2 py-1 bg-green-900 text-green-300 rounded text-sm">已结算</span>'
-              : '<span class="px-2 py-1 bg-yellow-900 text-yellow-300 rounded text-sm">待结算</span>'}
-          </td>
           <td class="px-6 py-4">
             <button onclick="viewCommissionDetail(${item.id})" class="text-blue-400 hover:text-blue-300">
               <i class="fas fa-eye mr-1"></i>详情
@@ -2375,7 +2351,7 @@ async function viewCommissionDetail(id) {
             <h4 class="text-lg font-semibold text-white mb-4 flex items-center">
               <i class="fas fa-info-circle text-primary mr-2"></i>基本信息
             </h4>
-            <div class="grid grid-cols-4 gap-4">
+            <div class="grid grid-cols-3 gap-4">
               <div>
                 <label class="block text-gray-400 text-sm mb-1">结算周期</label>
                 <div class="text-white font-medium">${commission.period}</div>
@@ -2383,17 +2359,6 @@ async function viewCommissionDetail(id) {
               <div>
                 <label class="block text-gray-400 text-sm mb-1">代理账号</label>
                 <div class="text-white font-medium">${commission.agent_username}</div>
-              </div>
-              <div>
-                <label class="block text-gray-400 text-sm mb-1">结算状态</label>
-                <div>
-                  ${commission.status === 'settled' 
-                    ? '<span class="px-2 py-1 bg-green-600 text-white text-xs rounded">已结算</span>'
-                    : commission.status === 'pending'
-                    ? '<span class="px-2 py-1 bg-yellow-600 text-white text-xs rounded">待结算</span>'
-                    : '<span class="px-2 py-1 bg-gray-600 text-white text-xs rounded">未知</span>'
-                  }
-                </div>
               </div>
               <div>
                 <label class="block text-gray-400 text-sm mb-1">佣金比例</label>

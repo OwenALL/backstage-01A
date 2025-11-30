@@ -71,13 +71,13 @@ function showToast(message, type = 'info') {
 async function handleLogin(event) {
   event.preventDefault();
   const form = event.target;
-  const username = form.username.value.trim();
+  const agent_username = form.username.value.trim();
   const password = form.password.value;
 
   try {
     const result = await api('/api/agent/login', {
       method: 'POST',
-      body: JSON.stringify({ username, password })
+      body: JSON.stringify({ agent_username, password })
     });
 
     if (result.success) {

@@ -12101,26 +12101,27 @@ function showPlayerDetailModal(player) {
         </button>
       </div>
       
-      <!-- 功能按钮区 (红色区域) -->
+      <!-- 快捷操作按钮区 -->
       <div class="px-6 py-4 border-b border-gray-700 bg-gray-750">
-        <div class="flex flex-wrap gap-2">
-          <button onclick="handlePlayerDeposit(${player.id})" class="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg text-sm font-medium transition-all shadow-lg">
-            <i class="fas fa-plus-circle mr-1.5"></i>存款
+        <h4 class="text-sm font-semibold text-gray-300 mb-3"><i class="fas fa-bolt mr-2 text-yellow-400"></i>快捷操作</h4>
+        <div class="grid grid-cols-3 md:grid-cols-6 gap-2">
+          <button onclick="handlePlayerDeposit(${player.id})" class="px-3 py-2 bg-green-600 hover:bg-green-700 rounded-lg text-sm font-medium transition-all shadow-lg">
+            <i class="fas fa-plus-circle mr-1"></i>存款
           </button>
-          <button onclick="handlePlayerWithdraw(${player.id})" class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-sm font-medium transition-all shadow-lg">
-            <i class="fas fa-minus-circle mr-1.5"></i>提款
+          <button onclick="handlePlayerWithdraw(${player.id})" class="px-3 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-sm font-medium transition-all shadow-lg">
+            <i class="fas fa-minus-circle mr-1"></i>提款
           </button>
-          <button onclick="handlePlayerBalance(${player.id})" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg text-sm font-medium transition-all">
-            <i class="fas fa-wallet mr-1.5"></i>余额
+          <button onclick="handlePlayerBalance(${player.id})" class="px-3 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition-all">
+            <i class="fas fa-wallet mr-1"></i>余额
           </button>
-          <button onclick="handlePlayerTransfer(${player.id})" class="px-4 py-2 bg-orange-600 hover:bg-orange-700 rounded-lg text-sm font-medium transition-all shadow-lg">
-            <i class="fas fa-exchange-alt mr-1.5"></i>转账
+          <button onclick="handlePlayerTransfer(${player.id})" class="px-3 py-2 bg-orange-600 hover:bg-orange-700 rounded-lg text-sm font-medium transition-all shadow-lg">
+            <i class="fas fa-exchange-alt mr-1"></i>转账
           </button>
-          <button onclick="showPlayerMoreActions(${player.id})" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg text-sm font-medium transition-all">
-            <i class="fas fa-ellipsis-h mr-1.5"></i>更多
+          <button onclick="viewPlayerTransactions(${player.id})" class="px-3 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-sm font-medium transition-all">
+            <i class="fas fa-history mr-1"></i>交易记录
           </button>
-          <button onclick="handleKickPlayer(${player.id}, '${escapeJs(player.username)}')" class="px-4 py-2 bg-red-500 hover:bg-red-600 rounded-lg text-sm font-medium transition-all shadow-lg">
-            <i class="fas fa-user-slash mr-1.5"></i>踢线
+          <button onclick="handleKickPlayer(${player.id}, '${escapeJs(player.username)}')" class="px-3 py-2 bg-red-500 hover:bg-red-600 rounded-lg text-sm font-medium transition-all shadow-lg">
+            <i class="fas fa-user-slash mr-1"></i>踢线
           </button>
         </div>
       </div>
@@ -12215,17 +12216,35 @@ function showPlayerDetailModal(player) {
           </div>
         </div>
         
-        <!-- 底部操作按钮 -->
-        <div class="mt-6 pt-6 border-t border-gray-700 flex justify-end gap-3">
-          <button onclick="editPlayer(${player.id})" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition-all">
-            <i class="fas fa-edit mr-1.5"></i>编辑资料
-          </button>
-          <button onclick="viewPlayerTransactions(${player.id})" class="px-5 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-sm font-medium transition-all">
-            <i class="fas fa-history mr-1.5"></i>交易记录
-          </button>
-          <button onclick="closePlayerDetailModal()" class="px-5 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg text-sm font-medium transition-all">
-            <i class="fas fa-times mr-1.5"></i>关闭
-          </button>
+        <!-- 管理功能按钮 -->
+        <div class="mt-6 pt-6 border-t border-gray-700">
+          <h4 class="text-sm font-semibold text-gray-300 mb-3"><i class="fas fa-cogs mr-2 text-blue-400"></i>管理功能</h4>
+          <div class="grid grid-cols-3 gap-2">
+            <button onclick="editPlayerProfile(${player.id})" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition-all">
+              <i class="fas fa-edit mr-1"></i>编辑资料
+            </button>
+            <button onclick="setPlayerRiskLevel(${player.id})" class="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 rounded-lg text-sm font-medium transition-all">
+              <i class="fas fa-exclamation-triangle mr-1"></i>风险等级
+            </button>
+            <button onclick="adjustPlayerVipLevel(${player.id})" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-sm font-medium transition-all">
+              <i class="fas fa-crown mr-1"></i>VIP等级
+            </button>
+            <button onclick="togglePlayerStatus(${player.id}, ${player.status})" class="px-4 py-2 ${player.status === 0 ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'} rounded-lg text-sm font-medium transition-all">
+              <i class="fas fa-${player.status === 0 ? 'lock' : 'unlock'} mr-1"></i>${player.status === 0 ? '冻结账户' : '解冻账户'}
+            </button>
+            <button onclick="viewPlayerLogs(${player.id})" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg text-sm font-medium transition-all">
+              <i class="fas fa-clipboard-list mr-1"></i>操作日志
+            </button>
+            <button onclick="sendPlayerMessage(${player.id})" class="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 rounded-lg text-sm font-medium transition-all">
+              <i class="fas fa-envelope mr-1"></i>站内信
+            </button>
+            <button onclick="addToBlacklist(${player.id}, '${escapeJs(player.username)}')" class="px-4 py-2 bg-black hover:bg-gray-900 rounded-lg text-sm font-medium transition-all">
+              <i class="fas fa-ban mr-1"></i>拉黑名单
+            </button>
+            <button onclick="closePlayerDetailModal()" class="px-4 py-2 bg-gray-700 hover:bg-gray-800 rounded-lg text-sm font-medium transition-all">
+              <i class="fas fa-times mr-1"></i>关闭
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -13034,5 +13053,839 @@ async function deleteVipLevel(levelId, levelName) {
   } catch (error) {
     console.error('Delete VIP level error:', error);
     showToast('删除失败: ' + error.message, 'error');
+  }
+}
+
+// ==================== 玩家详情相关功能 ====================
+
+// 编辑玩家资料
+async function editPlayer(playerId) {
+  try {
+    const response = await api(`/api/players/${playerId}`);
+    if (!response.success) {
+      showToast('获取玩家信息失败', 'error');
+      return;
+    }
+    
+    const player = response.data;
+    const modal = document.createElement('div');
+    modal.id = 'edit-player-modal';
+    modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[60] p-4';
+    modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+    
+    modal.innerHTML = `
+      <div class="bg-gray-800 rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
+        <div class="px-6 py-4 border-b border-gray-700 flex justify-between items-center sticky top-0 bg-gray-800 z-10">
+          <h3 class="text-xl font-bold">
+            <i class="fas fa-user-edit text-blue-400 mr-2"></i>编辑玩家资料
+          </h3>
+          <button onclick="this.closest('#edit-player-modal').remove()" class="text-gray-400 hover:text-white transition-colors">
+            <i class="fas fa-times text-xl"></i>
+          </button>
+        </div>
+        
+        <form id="edit-player-form" class="p-6 space-y-4">
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium mb-2">账号</label>
+              <input type="text" value="${escapeHtml(player.username)}" disabled 
+                class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-400">
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-2">昵称</label>
+              <input type="text" name="nickname" value="${escapeHtml(player.nickname || '')}" 
+                class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary">
+            </div>
+          </div>
+          
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium mb-2">真实姓名</label>
+              <input type="text" name="real_name" value="${escapeHtml(player.real_name || '')}" 
+                class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary">
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-2">手机号</label>
+              <input type="tel" name="phone" value="${escapeHtml(player.phone || '')}" 
+                class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary">
+            </div>
+          </div>
+          
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium mb-2">邮箱</label>
+              <input type="email" name="email" value="${escapeHtml(player.email || '')}" 
+                class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary">
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-2">QQ号</label>
+              <input type="text" name="qq" value="${escapeHtml(player.qq || '')}" 
+                class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary">
+            </div>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium mb-2">备注</label>
+            <textarea name="remark" rows="3" 
+              class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary">${escapeHtml(player.remark || '')}</textarea>
+          </div>
+          
+          <div class="flex justify-end gap-3 pt-4 border-t border-gray-700">
+            <button type="button" onclick="this.closest('#edit-player-modal').remove()" 
+              class="px-5 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg transition-colors">
+              <i class="fas fa-times mr-1.5"></i>取消
+            </button>
+            <button type="submit" 
+              class="px-5 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors">
+              <i class="fas fa-save mr-1.5"></i>保存
+            </button>
+          </div>
+        </form>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // 表单提交
+    document.getElementById('edit-player-form').onsubmit = async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const data = Object.fromEntries(formData);
+      
+      try {
+        const result = await api(`/api/players/${playerId}`, {
+          method: 'PUT',
+          body: JSON.stringify(data)
+        });
+        
+        if (result.success) {
+          showToast('编辑成功', 'success');
+          modal.remove();
+          // 刷新玩家详情
+          closePlayerDetailModal();
+          viewPlayer(playerId);
+        } else {
+          showToast(result.error || '编辑失败', 'error');
+        }
+      } catch (error) {
+        console.error('Edit player error:', error);
+        showToast('编辑失败: ' + error.message, 'error');
+      }
+    };
+  } catch (error) {
+    console.error('Load player error:', error);
+    showToast('加载玩家信息失败', 'error');
+  }
+}
+
+// 查看玩家交易记录
+async function viewPlayerTransactions(playerId) {
+  try {
+    const response = await api(`/api/players/${playerId}/transactions`);
+    if (!response.success) {
+      showToast('获取交易记录失败', 'error');
+      return;
+    }
+    
+    const transactions = response.data || [];
+    const modal = document.createElement('div');
+    modal.id = 'player-transactions-modal';
+    modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[60] p-4';
+    modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+    
+    modal.innerHTML = `
+      <div class="bg-gray-800 rounded-xl max-w-6xl w-full max-h-[90vh] overflow-hidden flex flex-col" onclick="event.stopPropagation()">
+        <div class="px-6 py-4 border-b border-gray-700 flex justify-between items-center">
+          <h3 class="text-xl font-bold">
+            <i class="fas fa-exchange-alt text-green-400 mr-2"></i>交易记录
+          </h3>
+          <button onclick="this.closest('#player-transactions-modal').remove()" class="text-gray-400 hover:text-white transition-colors">
+            <i class="fas fa-times text-xl"></i>
+          </button>
+        </div>
+        
+        <div class="p-6 overflow-y-auto">
+          <div class="bg-gray-750 rounded-lg overflow-hidden">
+            <table class="w-full">
+              <thead class="bg-gray-700">
+                <tr>
+                  <th class="px-4 py-3 text-left text-sm font-medium">订单号</th>
+                  <th class="px-4 py-3 text-left text-sm font-medium">类型</th>
+                  <th class="px-4 py-3 text-right text-sm font-medium">金额</th>
+                  <th class="px-4 py-3 text-right text-sm font-medium">余额前</th>
+                  <th class="px-4 py-3 text-right text-sm font-medium">余额后</th>
+                  <th class="px-4 py-3 text-left text-sm font-medium">状态</th>
+                  <th class="px-4 py-3 text-left text-sm font-medium">时间</th>
+                  <th class="px-4 py-3 text-left text-sm font-medium">备注</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-700">
+                ${transactions.length === 0 ? `
+                  <tr>
+                    <td colspan="8" class="px-4 py-8 text-center text-gray-500">
+                      <i class="fas fa-inbox text-4xl mb-2"></i>
+                      <p>暂无交易记录</p>
+                    </td>
+                  </tr>
+                ` : transactions.map(t => `
+                  <tr class="hover:bg-gray-700 transition-colors">
+                    <td class="px-4 py-3 font-mono text-sm">${t.order_no || '-'}</td>
+                    <td class="px-4 py-3">
+                      ${getTransactionTypeBadge(t.type)}
+                    </td>
+                    <td class="px-4 py-3 text-right font-mono ${t.amount >= 0 ? 'text-green-400' : 'text-red-400'}">
+                      ${t.amount >= 0 ? '+' : ''}${formatCurrency(t.amount)}
+                    </td>
+                    <td class="px-4 py-3 text-right font-mono">${formatCurrency(t.balance_before || 0)}</td>
+                    <td class="px-4 py-3 text-right font-mono">${formatCurrency(t.balance_after || 0)}</td>
+                    <td class="px-4 py-3">${getStatusBadge(t.status)}</td>
+                    <td class="px-4 py-3 text-sm text-gray-400">${formatDate(t.created_at)}</td>
+                    <td class="px-4 py-3 text-sm text-gray-400">${escapeHtml(t.remark || '-')}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+          
+          <div class="mt-4 flex justify-end">
+            <button onclick="this.closest('#player-transactions-modal').remove()" 
+              class="px-5 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg transition-colors">
+              <i class="fas fa-times mr-1.5"></i>关闭
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+  } catch (error) {
+    console.error('Load transactions error:', error);
+    showToast('加载交易记录失败', 'error');
+  }
+}
+
+// 交易类型徽章
+function getTransactionTypeBadge(type) {
+  const types = {
+    'deposit': { text: '存款', color: 'bg-green-600' },
+    'withdraw': { text: '提款', color: 'bg-red-600' },
+    'bet': { text: '投注', color: 'bg-blue-600' },
+    'payout': { text: '派彩', color: 'bg-yellow-600' },
+    'transfer_in': { text: '转入', color: 'bg-purple-600' },
+    'transfer_out': { text: '转出', color: 'bg-orange-600' },
+    'bonus': { text: '红利', color: 'bg-pink-600' },
+    'commission': { text: '佣金', color: 'bg-indigo-600' },
+    'adjust': { text: '调整', color: 'bg-gray-600' }
+  };
+  const t = types[type] || { text: type, color: 'bg-gray-600' };
+  return `<span class="${t.color} px-2 py-1 rounded text-xs">${t.text}</span>`;
+}
+
+// 设置玩家风险等级
+async function setPlayerRiskLevel(playerId) {
+  const modal = document.createElement('div');
+  modal.id = 'set-risk-level-modal';
+  modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[60] p-4';
+  modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+  
+  modal.innerHTML = `
+    <div class="bg-gray-800 rounded-xl max-w-md w-full" onclick="event.stopPropagation()">
+      <div class="px-6 py-4 border-b border-gray-700 flex justify-between items-center">
+        <h3 class="text-xl font-bold">
+          <i class="fas fa-user-shield text-yellow-400 mr-2"></i>设置风险等级
+        </h3>
+        <button onclick="this.closest('#set-risk-level-modal').remove()" class="text-gray-400 hover:text-white">
+          <i class="fas fa-times text-xl"></i>
+        </button>
+      </div>
+      
+      <form id="set-risk-level-form" class="p-6 space-y-4">
+        <div>
+          <label class="block text-sm font-medium mb-2">风险等级</label>
+          <select name="risk_level" required 
+            class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary">
+            <option value="low">低风险 - 正常玩家</option>
+            <option value="medium">中风险 - 需要关注</option>
+            <option value="high">高风险 - 重点监控</option>
+            <option value="blacklist">黑名单 - 禁止操作</option>
+          </select>
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium mb-2">备注说明</label>
+          <textarea name="remark" rows="3" placeholder="请说明设置原因..." 
+            class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary"></textarea>
+        </div>
+        
+        <div class="flex justify-end gap-3 pt-4 border-t border-gray-700">
+          <button type="button" onclick="this.closest('#set-risk-level-modal').remove()" 
+            class="px-5 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg transition-colors">
+            <i class="fas fa-times mr-1.5"></i>取消
+          </button>
+          <button type="submit" 
+            class="px-5 py-2 bg-yellow-600 hover:bg-yellow-700 rounded-lg transition-colors">
+            <i class="fas fa-save mr-1.5"></i>确定
+          </button>
+        </div>
+      </form>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  
+  document.getElementById('set-risk-level-form').onsubmit = async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData);
+    
+    try {
+      const result = await api(`/api/players/${playerId}/risk-level`, {
+        method: 'PUT',
+        body: JSON.stringify(data)
+      });
+      
+      if (result.success) {
+        showToast('设置成功', 'success');
+        modal.remove();
+        closePlayerDetailModal();
+        viewPlayer(playerId);
+      } else {
+        showToast(result.error || '设置失败', 'error');
+      }
+    } catch (error) {
+      console.error('Set risk level error:', error);
+      showToast('设置失败: ' + error.message, 'error');
+    }
+  };
+}
+
+// 调整玩家VIP等级
+async function setPlayerVIPLevel(playerId) {
+  try {
+    // 加载VIP等级列表
+    const vipResponse = await api('/api/vip-levels');
+    const vipLevels = vipResponse.data || [];
+    
+    const modal = document.createElement('div');
+    modal.id = 'set-vip-level-modal';
+    modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[60] p-4';
+    modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+    
+    modal.innerHTML = `
+      <div class="bg-gray-800 rounded-xl max-w-md w-full" onclick="event.stopPropagation()">
+        <div class="px-6 py-4 border-b border-gray-700 flex justify-between items-center">
+          <h3 class="text-xl font-bold">
+            <i class="fas fa-star text-yellow-400 mr-2"></i>调整VIP等级
+          </h3>
+          <button onclick="this.closest('#set-vip-level-modal').remove()" class="text-gray-400 hover:text-white">
+            <i class="fas fa-times text-xl"></i>
+          </button>
+        </div>
+        
+        <form id="set-vip-level-form" class="p-6 space-y-4">
+          <div>
+            <label class="block text-sm font-medium mb-2">VIP等级</label>
+            <select name="vip_level" required 
+              class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary">
+              ${vipLevels.map(v => `
+                <option value="${v.level}">${v.level_name || 'VIP' + v.level} (升级奖励: ${formatCurrency(v.upgrade_bonus || 0)})</option>
+              `).join('')}
+            </select>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium mb-2">
+              <input type="checkbox" name="send_bonus" value="1" checked class="mr-2">
+              发放升级奖励
+            </label>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium mb-2">备注说明</label>
+            <textarea name="remark" rows="3" placeholder="请说明调整原因..." 
+              class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary"></textarea>
+          </div>
+          
+          <div class="flex justify-end gap-3 pt-4 border-t border-gray-700">
+            <button type="button" onclick="this.closest('#set-vip-level-modal').remove()" 
+              class="px-5 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg transition-colors">
+              <i class="fas fa-times mr-1.5"></i>取消
+            </button>
+            <button type="submit" 
+              class="px-5 py-2 bg-yellow-600 hover:bg-yellow-700 rounded-lg transition-colors">
+              <i class="fas fa-save mr-1.5"></i>确定
+            </button>
+          </div>
+        </form>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    document.getElementById('set-vip-level-form').onsubmit = async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const data = {
+        vip_level: parseInt(formData.get('vip_level')),
+        send_bonus: formData.get('send_bonus') === '1',
+        remark: formData.get('remark')
+      };
+      
+      try {
+        const result = await api(`/api/players/${playerId}/vip-level`, {
+          method: 'PUT',
+          body: JSON.stringify(data)
+        });
+        
+        if (result.success) {
+          showToast('调整成功', 'success');
+          modal.remove();
+          closePlayerDetailModal();
+          viewPlayer(playerId);
+        } else {
+          showToast(result.error || '调整失败', 'error');
+        }
+      } catch (error) {
+        console.error('Set VIP level error:', error);
+        showToast('调整失败: ' + error.message, 'error');
+      }
+    };
+  } catch (error) {
+    console.error('Load VIP levels error:', error);
+    showToast('加载VIP等级失败', 'error');
+  }
+}
+
+// 查看玩家操作日志
+async function viewPlayerLogs(playerId) {
+  try {
+    const response = await api(`/api/players/${playerId}/logs`);
+    if (!response.success) {
+      showToast('获取操作日志失败', 'error');
+      return;
+    }
+    
+    const logs = response.data || [];
+    const modal = document.createElement('div');
+    modal.id = 'player-logs-modal';
+    modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[60] p-4';
+    modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+    
+    modal.innerHTML = `
+      <div class="bg-gray-800 rounded-xl max-w-6xl w-full max-h-[90vh] overflow-hidden flex flex-col" onclick="event.stopPropagation()">
+        <div class="px-6 py-4 border-b border-gray-700 flex justify-between items-center">
+          <h3 class="text-xl font-bold">
+            <i class="fas fa-history text-blue-400 mr-2"></i>操作日志
+          </h3>
+          <button onclick="this.closest('#player-logs-modal').remove()" class="text-gray-400 hover:text-white transition-colors">
+            <i class="fas fa-times text-xl"></i>
+          </button>
+        </div>
+        
+        <div class="p-6 overflow-y-auto">
+          <div class="bg-gray-750 rounded-lg overflow-hidden">
+            <table class="w-full">
+              <thead class="bg-gray-700">
+                <tr>
+                  <th class="px-4 py-3 text-left text-sm font-medium">时间</th>
+                  <th class="px-4 py-3 text-left text-sm font-medium">操作类型</th>
+                  <th class="px-4 py-3 text-left text-sm font-medium">操作人</th>
+                  <th class="px-4 py-3 text-left text-sm font-medium">IP地址</th>
+                  <th class="px-4 py-3 text-left text-sm font-medium">详细内容</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-700">
+                ${logs.length === 0 ? `
+                  <tr>
+                    <td colspan="5" class="px-4 py-8 text-center text-gray-500">
+                      <i class="fas fa-inbox text-4xl mb-2"></i>
+                      <p>暂无操作日志</p>
+                    </td>
+                  </tr>
+                ` : logs.map(log => `
+                  <tr class="hover:bg-gray-700 transition-colors">
+                    <td class="px-4 py-3 text-sm text-gray-400">${formatDate(log.created_at)}</td>
+                    <td class="px-4 py-3">
+                      <span class="bg-blue-600 px-2 py-1 rounded text-xs">${escapeHtml(log.action_type)}</span>
+                    </td>
+                    <td class="px-4 py-3">${escapeHtml(log.operator_name || '-')}</td>
+                    <td class="px-4 py-3 font-mono text-sm">${escapeHtml(log.ip_address || '-')}</td>
+                    <td class="px-4 py-3 text-sm text-gray-400">${escapeHtml(log.description || '-')}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+          
+          <div class="mt-4 flex justify-end">
+            <button onclick="this.closest('#player-logs-modal').remove()" 
+              class="px-5 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg transition-colors">
+              <i class="fas fa-times mr-1.5"></i>关闭
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+  } catch (error) {
+    console.error('Load player logs error:', error);
+    showToast('加载操作日志失败', 'error');
+  }
+}
+
+// 发送站内信给玩家
+async function sendPlayerMessage(playerId) {
+  const modal = document.createElement('div');
+  modal.id = 'send-message-modal';
+  modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[60] p-4';
+  modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+  
+  modal.innerHTML = `
+    <div class="bg-gray-800 rounded-xl max-w-2xl w-full" onclick="event.stopPropagation()">
+      <div class="px-6 py-4 border-b border-gray-700 flex justify-between items-center">
+        <h3 class="text-xl font-bold">
+          <i class="fas fa-comment text-blue-400 mr-2"></i>发送站内信
+        </h3>
+        <button onclick="this.closest('#send-message-modal').remove()" class="text-gray-400 hover:text-white">
+          <i class="fas fa-times text-xl"></i>
+        </button>
+      </div>
+      
+      <form id="send-message-form" class="p-6 space-y-4">
+        <div>
+          <label class="block text-sm font-medium mb-2">消息类型</label>
+          <select name="type" required 
+            class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary">
+            <option value="notice">通知消息</option>
+            <option value="warning">警告消息</option>
+            <option value="promotion">优惠活动</option>
+            <option value="system">系统消息</option>
+          </select>
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium mb-2">消息标题</label>
+          <input type="text" name="title" required placeholder="请输入消息标题..." 
+            class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary">
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium mb-2">消息内容</label>
+          <textarea name="content" rows="6" required placeholder="请输入消息内容..." 
+            class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary"></textarea>
+        </div>
+        
+        <div class="flex justify-end gap-3 pt-4 border-t border-gray-700">
+          <button type="button" onclick="this.closest('#send-message-modal').remove()" 
+            class="px-5 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg transition-colors">
+            <i class="fas fa-times mr-1.5"></i>取消
+          </button>
+          <button type="submit" 
+            class="px-5 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors">
+            <i class="fas fa-paper-plane mr-1.5"></i>发送
+          </button>
+        </div>
+      </form>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  
+  document.getElementById('send-message-form').onsubmit = async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData);
+    
+    try {
+      const result = await api(`/api/players/${playerId}/messages`, {
+        method: 'POST',
+        body: JSON.stringify(data)
+      });
+      
+      if (result.success) {
+        showToast('发送成功', 'success');
+        modal.remove();
+      } else {
+        showToast(result.error || '发送失败', 'error');
+      }
+    } catch (error) {
+      console.error('Send message error:', error);
+      showToast('发送失败: ' + error.message, 'error');
+    }
+  };
+}
+
+// 拉黑玩家
+async function blockPlayer(playerId) {
+  if (!confirm('确定要将该玩家拉入黑名单吗？\n\n拉黑后该玩家将无法登录和进行任何操作。')) return;
+  
+  const reason = prompt('请输入拉黑原因:');
+  if (!reason) return;
+  
+  try {
+    const result = await api(`/api/players/${playerId}/block`, {
+      method: 'POST',
+      body: JSON.stringify({ reason })
+    });
+    
+    if (result.success) {
+      showToast('拉黑成功', 'success');
+      closePlayerDetailModal();
+      if (typeof searchPlayers === 'function') searchPlayers();
+    } else {
+      showToast(result.error || '拉黑失败', 'error');
+    }
+  } catch (error) {
+    console.error('Block player error:', error);
+    showToast('拉黑失败: ' + error.message, 'error');
+  }
+}
+
+// ==================== 代理详情相关功能 ====================
+
+// 编辑代理资料
+async function editAgent(agentId) {
+  try {
+    const response = await api(`/api/agents/${agentId}`);
+    if (!response.success) {
+      showToast('获取代理信息失败', 'error');
+      return;
+    }
+    
+    const agent = response.data;
+    const modal = document.createElement('div');
+    modal.id = 'edit-agent-modal';
+    modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[60] p-4';
+    modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+    
+    modal.innerHTML = `
+      <div class="bg-gray-800 rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
+        <div class="px-6 py-4 border-b border-gray-700 flex justify-between items-center sticky top-0 bg-gray-800 z-10">
+          <h3 class="text-xl font-bold">
+            <i class="fas fa-user-edit text-blue-400 mr-2"></i>编辑代理资料
+          </h3>
+          <button onclick="this.closest('#edit-agent-modal').remove()" class="text-gray-400 hover:text-white transition-colors">
+            <i class="fas fa-times text-xl"></i>
+          </button>
+        </div>
+        
+        <form id="edit-agent-form" class="p-6 space-y-4">
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium mb-2">账号</label>
+              <input type="text" value="${escapeHtml(agent.username)}" disabled 
+                class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-400">
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-2">昵称</label>
+              <input type="text" name="nickname" value="${escapeHtml(agent.nickname || '')}" 
+                class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary">
+            </div>
+          </div>
+          
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium mb-2">真实姓名</label>
+              <input type="text" name="real_name" value="${escapeHtml(agent.real_name || '')}" 
+                class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary">
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-2">手机号</label>
+              <input type="tel" name="phone" value="${escapeHtml(agent.phone || '')}" 
+                class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary">
+            </div>
+          </div>
+          
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium mb-2">邮箱</label>
+              <input type="email" name="email" value="${escapeHtml(agent.email || '')}" 
+                class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary">
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-2">佣金比例 (%)</label>
+              <input type="number" name="commission_rate" value="${(agent.commission_rate || 0) * 100}" 
+                min="0" max="100" step="0.01" 
+                class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary">
+            </div>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium mb-2">备注</label>
+            <textarea name="remark" rows="3" 
+              class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary">${escapeHtml(agent.remark || '')}</textarea>
+          </div>
+          
+          <div class="flex justify-end gap-3 pt-4 border-t border-gray-700">
+            <button type="button" onclick="this.closest('#edit-agent-modal').remove()" 
+              class="px-5 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg transition-colors">
+              <i class="fas fa-times mr-1.5"></i>取消
+            </button>
+            <button type="submit" 
+              class="px-5 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors">
+              <i class="fas fa-save mr-1.5"></i>保存
+            </button>
+          </div>
+        </form>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    document.getElementById('edit-agent-form').onsubmit = async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const data = Object.fromEntries(formData);
+      // 转换佣金比例为小数
+      data.commission_rate = parseFloat(data.commission_rate) / 100;
+      
+      try {
+        const result = await api(`/api/agents/${agentId}`, {
+          method: 'PUT',
+          body: JSON.stringify(data)
+        });
+        
+        if (result.success) {
+          showToast('编辑成功', 'success');
+          modal.remove();
+          // 刷新代理详情
+          const agentModal = document.getElementById('agent-detail-modal');
+          if (agentModal) agentModal.remove();
+          viewAgentDetail(agentId);
+        } else {
+          showToast(result.error || '编辑失败', 'error');
+        }
+      } catch (error) {
+        console.error('Edit agent error:', error);
+        showToast('编辑失败: ' + error.message, 'error');
+      }
+    };
+  } catch (error) {
+    console.error('Load agent error:', error);
+    showToast('加载代理信息失败', 'error');
+  }
+}
+
+// 查看代理业绩
+async function viewAgentPerformance(agentId) {
+  try {
+    const response = await api(`/api/agents/${agentId}/performance`);
+    if (!response.success) {
+      showToast('获取代理业绩失败', 'error');
+      return;
+    }
+    
+    const performance = response.data || {};
+    const modal = document.createElement('div');
+    modal.id = 'agent-performance-modal';
+    modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[60] p-4';
+    modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+    
+    modal.innerHTML = `
+      <div class="bg-gray-800 rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
+        <div class="px-6 py-4 border-b border-gray-700 flex justify-between items-center sticky top-0 bg-gray-800 z-10">
+          <h3 class="text-xl font-bold">
+            <i class="fas fa-chart-bar text-purple-400 mr-2"></i>代理业绩
+          </h3>
+          <button onclick="this.closest('#agent-performance-modal').remove()" class="text-gray-400 hover:text-white transition-colors">
+            <i class="fas fa-times text-xl"></i>
+          </button>
+        </div>
+        
+        <div class="p-6 space-y-6">
+          <!-- 统计卡片 -->
+          <div class="grid grid-cols-4 gap-4">
+            <div class="bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg p-4">
+              <div class="text-sm text-blue-200 mb-1">团队人数</div>
+              <div class="text-2xl font-bold">${performance.total_members || 0}</div>
+            </div>
+            <div class="bg-gradient-to-br from-green-600 to-green-700 rounded-lg p-4">
+              <div class="text-sm text-green-200 mb-1">玩家人数</div>
+              <div class="text-2xl font-bold">${performance.total_players || 0}</div>
+            </div>
+            <div class="bg-gradient-to-br from-purple-600 to-purple-700 rounded-lg p-4">
+              <div class="text-sm text-purple-200 mb-1">总投注</div>
+              <div class="text-xl font-bold">${formatCurrency(performance.total_bet || 0)}</div>
+            </div>
+            <div class="bg-gradient-to-br from-orange-600 to-orange-700 rounded-lg p-4">
+              <div class="text-sm text-orange-200 mb-1">总佣金</div>
+              <div class="text-xl font-bold">${formatCurrency(performance.total_commission || 0)}</div>
+            </div>
+          </div>
+          
+          <!-- 本月业绩 -->
+          <div class="bg-gray-750 rounded-lg p-6">
+            <h4 class="text-lg font-semibold mb-4 flex items-center">
+              <i class="fas fa-calendar-alt text-primary mr-2"></i>本月业绩
+            </h4>
+            <div class="grid grid-cols-3 gap-6">
+              <div>
+                <div class="text-sm text-gray-400 mb-1">月度投注</div>
+                <div class="text-xl font-mono">${formatCurrency(performance.month_bet || 0)}</div>
+              </div>
+              <div>
+                <div class="text-sm text-gray-400 mb-1">公司盈亏</div>
+                <div class="text-xl font-mono ${(performance.month_profit || 0) >= 0 ? 'text-green-400' : 'text-red-400'}">
+                  ${formatCurrency(performance.month_profit || 0)}
+                </div>
+              </div>
+              <div>
+                <div class="text-sm text-gray-400 mb-1">月度佣金</div>
+                <div class="text-xl font-mono text-yellow-400">${formatCurrency(performance.month_commission || 0)}</div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 下级代理列表 -->
+          ${(performance.sub_agents || []).length > 0 ? `
+            <div class="bg-gray-750 rounded-lg p-6">
+              <h4 class="text-lg font-semibold mb-4 flex items-center">
+                <i class="fas fa-users text-primary mr-2"></i>下级代理
+              </h4>
+              <div class="space-y-2">
+                ${performance.sub_agents.map(sub => `
+                  <div class="flex items-center justify-between p-3 bg-gray-700 rounded hover:bg-gray-650 transition-colors">
+                    <div class="flex items-center gap-3">
+                      <span class="font-medium">${escapeHtml(sub.username)}</span>
+                      <span class="text-xs text-gray-400">Level ${sub.level}</span>
+                    </div>
+                    <div class="flex items-center gap-6 text-sm">
+                      <div>
+                        <span class="text-gray-400">下级:</span>
+                        <span class="font-mono ml-1">${sub.sub_count || 0}</span>
+                      </div>
+                      <div>
+                        <span class="text-gray-400">玩家:</span>
+                        <span class="font-mono ml-1">${sub.player_count || 0}</span>
+                      </div>
+                      <div>
+                        <span class="text-gray-400">投注:</span>
+                        <span class="font-mono ml-1">${formatCurrency(sub.total_bet || 0)}</span>
+                      </div>
+                      <button onclick="viewAgentDetail(${sub.id})" class="text-blue-400 hover:text-blue-300">
+                        <i class="fas fa-eye"></i>
+                      </button>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          ` : ''}
+          
+          <div class="flex justify-end">
+            <button onclick="this.closest('#agent-performance-modal').remove()" 
+              class="px-5 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg transition-colors">
+              <i class="fas fa-times mr-1.5"></i>关闭
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+  } catch (error) {
+    console.error('Load agent performance error:', error);
+    showToast('加载代理业绩失败', 'error');
   }
 }

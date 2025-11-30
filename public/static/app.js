@@ -1310,10 +1310,20 @@ async function showEditAgentModal(agentId) {
           
           <div>
             <label class="block text-sm text-gray-400 mb-2">级别</label>
-            <select name="level" disabled class="w-full bg-gray-700 border border-gray-600 rounded px-4 py-2">
+            <select name="level" id="edit-agent-level-select" onchange="updateEditParentAgentOptions(${agentId})" class="w-full bg-gray-700 border border-gray-600 rounded px-4 py-2">
               <option value="shareholder" ${agent.level === 'shareholder' ? 'selected' : ''}>股东</option>
               <option value="general_agent" ${agent.level === 'general_agent' ? 'selected' : ''}>总代理</option>
               <option value="agent" ${agent.level === 'agent' ? 'selected' : ''}>代理</option>
+            </select>
+          </div>
+          
+          <div>
+            <label class="block text-sm text-gray-400 mb-2">
+              上级代理 <span class="text-red-500" id="edit-parent-required-mark">*</span>
+              <span class="text-xs text-gray-500" id="edit-parent-hint"></span>
+            </label>
+            <select name="parent_id" id="edit-parent-agent-select" class="w-full bg-gray-700 border border-gray-600 rounded px-4 py-2">
+              <option value="">加载中...</option>
             </select>
           </div>
           
@@ -1378,6 +1388,9 @@ async function showEditAgentModal(agentId) {
   `;
   document.body.appendChild(modal);
   
+  // 初始化上级代理选项
+  await updateEditParentAgentOptions(agentId, agent.parent_id);
+  
   // 绑定表单提交
   document.getElementById('edit-agent-form').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -1410,6 +1423,11 @@ function removeDomainField(idx) {
 
 // 更新代理信息
 async function updateAgentInfo(agentId, modal) {
+  // 验证层级关系
+  if (!validateEditAgentHierarchy()) {
+    return;
+  }
+  
   const form = document.getElementById('edit-agent-form');
   const formData = new FormData(form);
   
@@ -1419,42 +1437,34 @@ async function updateAgentInfo(agentId, modal) {
     .map(input => input.value.trim())
     .filter(v => v !== '');
   
-  // 验证域名
-  for (const domain of domains) {
-    const validateResult = await api('/api/agents/validate-domain', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ domain, agent_id: agentId })
-    });
-    
-    if (!validateResult.success) {
-      alert(validateResult.error);
-      return;
-    }
-  }
-  
   const data = {
     nickname: formData.get('nickname'),
-    share_ratio: parseFloat(formData.get('share_ratio')) / 100,
-    commission_ratio: parseFloat(formData.get('commission_ratio')) / 100,
+    level: formData.get('level'),
+    parent_id: formData.get('parent_id') || null,
+    share_ratio: parseFloat(formData.get('share_ratio')) || 0,
+    commission_ratio: parseFloat(formData.get('commission_ratio')) || 0,
     contact_phone: formData.get('contact_phone'),
     contact_email: formData.get('contact_email'),
     notes: formData.get('notes'),
-    custom_domains: domains
+    domains: domains
   };
   
-  const result = await api(`/api/agents/${agentId}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data)
-  });
-  
-  if (result.success) {
-    alert('代理信息更新成功！');
-    modal.remove();
-    loadModule('agents');
-  } else {
-    alert('更新失败: ' + result.error);
+  try {
+    const result = await api(`/api/agents/${agentId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    });
+    
+    if (result.success) {
+      showToast('代理信息更新成功', 'success');
+      modal.remove();
+      loadModule('agents'); // 刷新代理列表
+    } else {
+      showToast(result.error || '更新失败', 'error');
+    }
+  } catch (error) {
+    console.error('Update agent error:', error);
+    showToast('更新失败: ' + error.message, 'error');
   }
 }
 
@@ -1504,11 +1514,22 @@ function showAddAgentModal() {
           </div>
           
           <div>
-            <label class="block text-sm text-gray-400 mb-2">级别</label>
-            <select name="level" class="w-full bg-gray-700 border border-gray-600 rounded px-4 py-2">
+            <label class="block text-sm text-gray-400 mb-2">级别 <span class="text-red-500">*</span></label>
+            <select name="level" id="agent-level-select" onchange="updateParentAgentOptions()" required class="w-full bg-gray-700 border border-gray-600 rounded px-4 py-2">
+              <option value="">请选择级别</option>
               <option value="agent">代理</option>
               <option value="general_agent">总代理</option>
               <option value="shareholder">股东</option>
+            </select>
+          </div>
+          
+          <div>
+            <label class="block text-sm text-gray-400 mb-2">
+              上级代理 <span class="text-red-500" id="parent-required-mark">*</span>
+              <span class="text-xs text-gray-500" id="parent-hint"></span>
+            </label>
+            <select name="parent_id" id="parent-agent-select" class="w-full bg-gray-700 border border-gray-600 rounded px-4 py-2">
+              <option value="">请先选择级别</option>
             </select>
           </div>
           
@@ -1589,57 +1610,7 @@ function removeNewDomainField(idx) {
   }
 }
 
-// 创建代理
-async function createAgent(modal) {
-  const form = document.getElementById('add-agent-form');
-  const formData = new FormData(form);
-  
-  // 收集域名
-  const domainInputs = document.querySelectorAll('.new-domain-input');
-  const domains = Array.from(domainInputs)
-    .map(input => input.value.trim())
-    .filter(v => v !== '');
-  
-  // 验证域名
-  for (const domain of domains) {
-    const validateResult = await api('/api/agents/validate-domain', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ domain })
-    });
-    
-    if (!validateResult.success) {
-      alert(validateResult.error);
-      return;
-    }
-  }
-  
-  const data = {
-    agent_username: formData.get('agent_username'),
-    password: formData.get('password'),
-    nickname: formData.get('nickname'),
-    level: formData.get('level'),
-    share_ratio: parseFloat(formData.get('share_ratio')) / 100,
-    commission_ratio: parseFloat(formData.get('commission_ratio')) / 100,
-    contact_phone: formData.get('contact_phone'),
-    contact_email: formData.get('contact_email'),
-    custom_domains: domains
-  };
-  
-  const result = await api('/api/agents', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data)
-  });
-  
-  if (result.success) {
-    alert(`代理创建成功！\n邀请码: ${result.data.invite_code}`);
-    modal.remove();
-    loadModule('agents');
-  } else {
-    alert('创建失败: ' + result.error);
-  }
-}
+// 创建代理函数已移至文件末尾（带层级验证）
 
 // =====================
 // 4. 财务控端
@@ -12998,18 +12969,25 @@ function showAddPlayerModal() {
 // 加载代理列表到下拉框
 async function loadAgentsForSelect() {
   try {
-    const result = await api('/api/agents');
+    // 只加载"代理"级别的账号（不包括总代理和股东）
+    const result = await api('/api/agents?level=agent&status=1');
     if (result.success && result.data) {
       const select = document.querySelector('#add-player-form select[name="agent_id"]');
       if (select) {
-        const options = result.data.map(agent => 
-          `<option value="${agent.id}">${escapeHtml(agent.username)} (Level ${agent.level})</option>`
-        ).join('');
-        select.innerHTML = '<option value="">直属</option>' + options;
+        if (result.data.length === 0) {
+          select.innerHTML = '<option value="">暂无可用代理</option>';
+          showToast('系统中暂无可用代理，请先创建代理账号', 'warning');
+        } else {
+          const options = result.data.map(agent => 
+            `<option value="${agent.id}">${escapeHtml(agent.agent_username || agent.username)} (ID:${agent.id})</option>`
+          ).join('');
+          select.innerHTML = '<option value="">直属</option>' + options;
+        }
       }
     }
   } catch (error) {
     console.error('Error loading agents:', error);
+    showToast('加载代理列表失败', 'error');
   }
 }
 
@@ -14303,4 +14281,295 @@ async function viewAgentPerformance(agentId) {
     console.error('Load agent performance error:', error);
     showToast('加载代理业绩失败', 'error');
   }
+}
+
+// ==========================================
+// 代理层级关系管理
+// ==========================================
+
+// 更新上级代理选项（根据选择的级别）
+async function updateParentAgentOptions() {
+  const levelSelect = document.getElementById('agent-level-select');
+  const parentSelect = document.getElementById('parent-agent-select');
+  const parentHint = document.getElementById('parent-hint');
+  const requiredMark = document.getElementById('parent-required-mark');
+  
+  if (!levelSelect || !parentSelect) return;
+  
+  const selectedLevel = levelSelect.value;
+  
+  // 清空当前选项
+  parentSelect.innerHTML = '<option value="">加载中...</option>';
+  
+  // 根据级别设置提示和要求
+  let parentLevel = '';
+  let isRequired = true;
+  let hint = '';
+  
+  switch(selectedLevel) {
+    case 'agent':
+      parentLevel = 'general_agent';
+      hint = '(必须选择总代理)';
+      isRequired = true;
+      break;
+    case 'general_agent':
+      parentLevel = 'shareholder';
+      hint = '(必须选择股东)';
+      isRequired = true;
+      break;
+    case 'shareholder':
+      parentLevel = '';
+      hint = '(股东无需上级)';
+      isRequired = false;
+      break;
+    default:
+      parentSelect.innerHTML = '<option value="">请先选择级别</option>';
+      parentHint.textContent = '';
+      return;
+  }
+  
+  parentHint.textContent = hint;
+  
+  if (isRequired) {
+    requiredMark.style.display = 'inline';
+    parentSelect.required = true;
+  } else {
+    requiredMark.style.display = 'none';
+    parentSelect.required = false;
+  }
+  
+  // 如果是股东，不需要上级
+  if (selectedLevel === 'shareholder') {
+    parentSelect.innerHTML = '<option value="">无需上级</option>';
+    parentSelect.disabled = true;
+    return;
+  }
+  
+  // 加载对应级别的代理列表
+  try {
+    const result = await api(`/api/agents?level=${parentLevel}&status=1`);
+    
+    if (!result.success) {
+      parentSelect.innerHTML = '<option value="">加载失败</option>';
+      showToast('加载上级代理列表失败', 'error');
+      return;
+    }
+    
+    const agents = result.data || [];
+    
+    if (agents.length === 0) {
+      const levelName = parentLevel === 'general_agent' ? '总代理' : '股东';
+      parentSelect.innerHTML = `<option value="">暂无可选的${levelName}</option>`;
+      showToast(`系统中暂无${levelName}，请先创建${levelName}账号`, 'warning');
+      return;
+    }
+    
+    // 生成选项
+    parentSelect.innerHTML = '<option value="">请选择上级代理</option>' + 
+      agents.map(agent => 
+        `<option value="${agent.id}">${escapeHtml(agent.agent_username || agent.username)} (ID:${agent.id})</option>`
+      ).join('');
+    
+    parentSelect.disabled = false;
+    
+  } catch (error) {
+    console.error('Load parent agents error:', error);
+    parentSelect.innerHTML = '<option value="">加载失败</option>';
+    showToast('加载上级代理列表失败: ' + error.message, 'error');
+  }
+}
+
+// 验证代理层级关系
+function validateAgentHierarchy() {
+  const levelSelect = document.getElementById('agent-level-select');
+  const parentSelect = document.getElementById('parent-agent-select');
+  
+  if (!levelSelect || !parentSelect) return true;
+  
+  const level = levelSelect.value;
+  const parentId = parentSelect.value;
+  
+  // 股东不需要上级
+  if (level === 'shareholder') {
+    return true;
+  }
+  
+  // 代理和总代理必须有上级
+  if ((level === 'agent' || level === 'general_agent') && !parentId) {
+    const levelName = level === 'agent' ? '代理' : '总代理';
+    const parentLevelName = level === 'agent' ? '总代理' : '股东';
+    showToast(`${levelName}必须绑定在${parentLevelName}下`, 'error');
+    return false;
+  }
+  
+  return true;
+}
+
+// 修改后的创建代理函数（添加层级验证）
+async function createAgent(modal) {
+  // 验证层级关系
+  if (!validateAgentHierarchy()) {
+    return;
+  }
+  
+  const form = document.getElementById('add-agent-form');
+  const formData = new FormData(form);
+  
+  // 收集专属域名
+  const domains = [];
+  document.querySelectorAll('#new-domains-list input[name="domain"]').forEach(input => {
+    if (input.value.trim()) domains.push(input.value.trim());
+  });
+  
+  const data = {
+    agent_username: formData.get('agent_username'),
+    password: formData.get('password'),
+    nickname: formData.get('nickname'),
+    level: formData.get('level'),
+    parent_id: formData.get('parent_id') || null,
+    share_ratio: parseFloat(formData.get('share_ratio')) || 0,
+    commission_ratio: parseFloat(formData.get('commission_ratio')) || 0,
+    contact_phone: formData.get('contact_phone'),
+    contact_email: formData.get('contact_email'),
+    domains: domains
+  };
+  
+  try {
+    const result = await api('/api/agents', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+    
+    if (result.success) {
+      showToast('代理创建成功', 'success');
+      modal.remove();
+      loadModule('agents'); // 刷新代理列表
+    } else {
+      showToast(result.error || '创建失败', 'error');
+    }
+  } catch (error) {
+    console.error('Create agent error:', error);
+    showToast('创建失败: ' + error.message, 'error');
+  }
+}
+
+// 更新编辑模式的上级代理选项
+async function updateEditParentAgentOptions(agentId, currentParentId = null) {
+  const levelSelect = document.getElementById('edit-agent-level-select');
+  const parentSelect = document.getElementById('edit-parent-agent-select');
+  const parentHint = document.getElementById('edit-parent-hint');
+  const requiredMark = document.getElementById('edit-parent-required-mark');
+  
+  if (!levelSelect || !parentSelect) return;
+  
+  const selectedLevel = levelSelect.value;
+  
+  // 清空当前选项
+  parentSelect.innerHTML = '<option value="">加载中...</option>';
+  
+  // 根据级别设置提示和要求
+  let parentLevel = '';
+  let isRequired = true;
+  let hint = '';
+  
+  switch(selectedLevel) {
+    case 'agent':
+      parentLevel = 'general_agent';
+      hint = '(必须选择总代理)';
+      isRequired = true;
+      break;
+    case 'general_agent':
+      parentLevel = 'shareholder';
+      hint = '(必须选择股东)';
+      isRequired = true;
+      break;
+    case 'shareholder':
+      parentLevel = '';
+      hint = '(股东无需上级)';
+      isRequired = false;
+      break;
+    default:
+      parentSelect.innerHTML = '<option value="">请先选择级别</option>';
+      parentHint.textContent = '';
+      return;
+  }
+  
+  parentHint.textContent = hint;
+  
+  if (isRequired) {
+    requiredMark.style.display = 'inline';
+    parentSelect.required = true;
+  } else {
+    requiredMark.style.display = 'none';
+    parentSelect.required = false;
+  }
+  
+  // 如果是股东，不需要上级
+  if (selectedLevel === 'shareholder') {
+    parentSelect.innerHTML = '<option value="">无需上级</option>';
+    parentSelect.disabled = true;
+    return;
+  }
+  
+  // 加载对应级别的代理列表
+  try {
+    const result = await api(`/api/agents?level=${parentLevel}&status=1`);
+    
+    if (!result.success) {
+      parentSelect.innerHTML = '<option value="">加载失败</option>';
+      showToast('加载上级代理列表失败', 'error');
+      return;
+    }
+    
+    const agents = result.data || [];
+    
+    // 过滤掉当前正在编辑的代理（避免循环引用）
+    const filteredAgents = agents.filter(agent => agent.id !== agentId);
+    
+    if (filteredAgents.length === 0) {
+      const levelName = parentLevel === 'general_agent' ? '总代理' : '股东';
+      parentSelect.innerHTML = `<option value="">暂无可选的${levelName}</option>`;
+      showToast(`系统中暂无${levelName}，请先创建${levelName}账号`, 'warning');
+      return;
+    }
+    
+    // 生成选项
+    parentSelect.innerHTML = '<option value="">请选择上级代理</option>' + 
+      filteredAgents.map(agent => 
+        `<option value="${agent.id}" ${agent.id === currentParentId ? 'selected' : ''}>${escapeHtml(agent.agent_username || agent.username)} (ID:${agent.id})</option>`
+      ).join('');
+    
+    parentSelect.disabled = false;
+    
+  } catch (error) {
+    console.error('Load parent agents error:', error);
+    parentSelect.innerHTML = '<option value="">加载失败</option>';
+    showToast('加载上级代理列表失败: ' + error.message, 'error');
+  }
+}
+
+// 验证编辑模式的代理层级关系
+function validateEditAgentHierarchy() {
+  const levelSelect = document.getElementById('edit-agent-level-select');
+  const parentSelect = document.getElementById('edit-parent-agent-select');
+  
+  if (!levelSelect || !parentSelect) return true;
+  
+  const level = levelSelect.value;
+  const parentId = parentSelect.value;
+  
+  // 股东不需要上级
+  if (level === 'shareholder') {
+    return true;
+  }
+  
+  // 代理和总代理必须有上级
+  if ((level === 'agent' || level === 'general_agent') && !parentId) {
+    const levelName = level === 'agent' ? '代理' : '总代理';
+    const parentLevelName = level === 'agent' ? '总代理' : '股东';
+    showToast(`${levelName}必须绑定在${parentLevelName}下`, 'error');
+    return false;
+  }
+  
+  return true;
 }

@@ -617,19 +617,52 @@ app.post('/api/agents', async (c) => {
   const body = await c.req.json()
   
   try {
+    // 生成唯一邀请码
+    const generateInviteCode = () => {
+      const chars = 'abcdefghijklmnopqrstuvwxyz0123456789'
+      let code = ''
+      for (let i = 0; i < 8; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length))
+      }
+      return code
+    }
+    
+    let invite_code = generateInviteCode()
+    // 确保邀请码唯一
+    let existingAgent = await db.prepare(`SELECT id FROM agents WHERE invite_code = ?`).bind(invite_code).first()
+    while (existingAgent) {
+      invite_code = generateInviteCode()
+      existingAgent = await db.prepare(`SELECT id FROM agents WHERE invite_code = ?`).bind(invite_code).first()
+    }
+    
+    // 处理专属域名（JSON数组）
+    const custom_domains = body.custom_domains ? JSON.stringify(Array.isArray(body.custom_domains) ? body.custom_domains : [body.custom_domains]) : null
+    
+    // 密码哈希
+    const password_hash = body.password ? await hashPassword(body.password) : await hashPassword('123456')
+    
     const result = await db.prepare(`
       INSERT INTO agents (agent_username, password_hash, nickname, level, parent_agent_id, share_ratio, 
                          commission_ratio, turnover_rate, currency, default_commission_scheme_id, 
-                         default_limit_group_id, contact_phone, contact_email, contact_telegram)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                         default_limit_group_id, contact_phone, contact_email, contact_telegram,
+                         invite_code, custom_domains, invite_link_status)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).bind(
-      body.agent_username, body.password || 'default_hash', body.nickname, body.level || 'agent',
+      body.agent_username, password_hash, body.nickname || null, body.level || 'agent',
       body.parent_agent_id || null, body.share_ratio || 0, body.commission_ratio || 0,
-      body.turnover_rate || 0, body.currency || 'CNY', body.default_commission_scheme_id,
-      body.default_limit_group_id, body.contact_phone, body.contact_email, body.contact_telegram
+      body.turnover_rate || 0, body.currency || 'CNY', body.default_commission_scheme_id || null,
+      body.default_limit_group_id || null, body.contact_phone || null, body.contact_email || null, body.contact_telegram || null,
+      invite_code, custom_domains, body.invite_link_status !== undefined ? body.invite_link_status : 1
     ).run()
     
-    return c.json({ success: true, data: { id: result.meta.last_row_id }, message: '代理创建成功' })
+    return c.json({ 
+      success: true, 
+      data: { 
+        id: result.meta.last_row_id, 
+        invite_code: invite_code 
+      }, 
+      message: '代理创建成功' 
+    })
   } catch (error) {
     return c.json({ success: false, error: String(error) }, 500)
   }
@@ -644,7 +677,7 @@ app.put('/api/agents/:id', async (c) => {
   try {
     const fields = ['nickname', 'share_ratio', 'commission_ratio', 'turnover_rate', 'currency',
                    'default_commission_scheme_id', 'default_limit_group_id', 'contact_phone', 
-                   'contact_email', 'contact_telegram', 'notes', 'status']
+                   'contact_email', 'contact_telegram', 'notes', 'status', 'invite_link_status']
     const updates: string[] = []
     const values: any[] = []
     
@@ -654,6 +687,12 @@ app.put('/api/agents/:id', async (c) => {
         values.push(body[field])
       }
     })
+    
+    // 处理专属域名（JSON数组）
+    if (body.custom_domains !== undefined) {
+      updates.push('custom_domains = ?')
+      values.push(body.custom_domains ? JSON.stringify(Array.isArray(body.custom_domains) ? body.custom_domains : [body.custom_domains]) : null)
+    }
     
     if (updates.length === 0) {
       return c.json({ success: false, error: 'No fields to update' }, 400)
@@ -665,6 +704,78 @@ app.put('/api/agents/:id', async (c) => {
     await db.prepare(`UPDATE agents SET ${updates.join(', ')} WHERE id = ?`).bind(...values).run()
     
     return c.json({ success: true, message: '代理信息更新成功' })
+  } catch (error) {
+    return c.json({ success: false, error: String(error) }, 500)
+  }
+})
+
+// 重新生成邀请码
+app.post('/api/agents/:id/regenerate-invite', async (c) => {
+  const db = c.env.DB
+  const id = c.req.param('id')
+  
+  try {
+    const generateInviteCode = () => {
+      const chars = 'abcdefghijklmnopqrstuvwxyz0123456789'
+      let code = ''
+      for (let i = 0; i < 8; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length))
+      }
+      return code
+    }
+    
+    let invite_code = generateInviteCode()
+    // 确保邀请码唯一
+    let existingAgent = await db.prepare(`SELECT id FROM agents WHERE invite_code = ? AND id != ?`).bind(invite_code, id).first()
+    while (existingAgent) {
+      invite_code = generateInviteCode()
+      existingAgent = await db.prepare(`SELECT id FROM agents WHERE invite_code = ? AND id != ?`).bind(invite_code, id).first()
+    }
+    
+    await db.prepare(`UPDATE agents SET invite_code = ?, updated_at = datetime('now') WHERE id = ?`).bind(invite_code, id).run()
+    
+    return c.json({ success: true, data: { invite_code }, message: '邀请码重新生成成功' })
+  } catch (error) {
+    return c.json({ success: false, error: String(error) }, 500)
+  }
+})
+
+// 验证域名绑定
+app.post('/api/agents/validate-domain', async (c) => {
+  const db = c.env.DB
+  const body = await c.req.json()
+  const { domain, agent_id } = body
+  
+  try {
+    if (!domain || !domain.trim()) {
+      return c.json({ success: false, error: '域名不能为空' }, 400)
+    }
+    
+    // 域名格式验证
+    const domainPattern = /^([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}$/i
+    if (!domainPattern.test(domain)) {
+      return c.json({ success: false, error: '域名格式不正确' }, 400)
+    }
+    
+    // 检查域名是否已被其他代理使用
+    const agents = await db.prepare(`SELECT id, agent_username, custom_domains FROM agents WHERE custom_domains IS NOT NULL`).all()
+    
+    for (const agent of agents.results as any[]) {
+      if (agent_id && agent.id === parseInt(agent_id)) continue // 跳过自己
+      
+      if (agent.custom_domains) {
+        try {
+          const domains = JSON.parse(agent.custom_domains)
+          if (Array.isArray(domains) && domains.includes(domain)) {
+            return c.json({ success: false, error: `域名已被代理 ${agent.agent_username} 使用` }, 400)
+          }
+        } catch (e) {
+          // 忽略解析错误
+        }
+      }
+    }
+    
+    return c.json({ success: true, message: '域名可用' })
   } catch (error) {
     return c.json({ success: false, error: String(error) }, 500)
   }
@@ -6244,7 +6355,7 @@ app.get('*', (c) => {
     </main>
   </div>
 
-  <script src="/static/app.js?v=20251130-8"></script>
+  <script src="/static/app.js?v=20251130-9"></script>
 </body>
 </html>
   `)

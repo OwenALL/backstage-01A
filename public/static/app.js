@@ -797,7 +797,7 @@ async function renderAgents(container) {
       <div class="lg:col-span-2 bg-gray-800 rounded-xl p-5">
         <div class="flex justify-between items-center mb-4">
           <h3 class="text-lg font-semibold"><i class="fas fa-users text-primary mr-2"></i>代理列表</h3>
-          <button class="bg-primary hover:bg-blue-700 px-4 py-2 rounded-lg text-sm"><i class="fas fa-plus mr-2"></i>新增代理</button>
+          <button onclick="showAddAgentModal()" class="bg-primary hover:bg-blue-700 px-4 py-2 rounded-lg text-sm"><i class="fas fa-plus mr-2"></i>新增代理</button>
         </div>
         <table class="w-full data-table">
           <thead class="bg-gray-700">
@@ -809,25 +809,37 @@ async function renderAgents(container) {
               <th class="text-left p-3">洗码率</th>
               <th class="text-left p-3">下级/玩家</th>
               <th class="text-left p-3">状态</th>
+              <th class="text-left p-3">操作</th>
             </tr>
           </thead>
           <tbody>
             ${agents.map(a => `
               <tr class="border-t border-gray-700">
                 <td class="p-3">
-                  <p class="font-medium">${a.username}</p>
-                  <p class="text-sm text-gray-400">${a.nickname || ''}</p>
+                  <p class="font-medium">${escapeHtml(a.agent_username)}</p>
+                  <p class="text-sm text-gray-400">${escapeHtml(a.nickname || '')}</p>
                 </td>
                 <td class="p-3">
                   <span class="px-2 py-1 rounded text-xs ${a.level === 'shareholder' ? 'bg-yellow-600' : a.level === 'general_agent' ? 'bg-blue-600' : 'bg-gray-600'}">
                     ${a.level === 'shareholder' ? '股东' : a.level === 'general_agent' ? '总代' : '代理'}
                   </span>
                 </td>
-                <td class="p-3">${a.parent_name || '-'}</td>
-                <td class="p-3">${(a.profit_share_rate * 100).toFixed(1)}%</td>
+                <td class="p-3">${escapeHtml(a.parent_name || '-')}</td>
+                <td class="p-3">${(a.share_ratio * 100).toFixed(1)}%</td>
                 <td class="p-3">${(a.turnover_rate * 100).toFixed(2)}%</td>
-                <td class="p-3">${a.sub_agent_count} / ${a.player_count}</td>
+                <td class="p-3">${a.sub_agent_count || 0} / ${a.player_count || 0}</td>
                 <td class="p-3">${getStatusBadge(a.status)}</td>
+                <td class="p-3">
+                  <button onclick="showAgentInviteModal(${a.id}, '${escapeJs(a.agent_username)}')" class="text-green-400 hover:text-green-300 mr-2" title="分享链接">
+                    <i class="fas fa-share-alt"></i>
+                  </button>
+                  <button onclick="showEditAgentModal(${a.id})" class="text-blue-400 hover:text-blue-300 mr-2" title="编辑">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button onclick="viewAgentDetail(${a.id})" class="text-gray-400 hover:text-gray-300" title="详情">
+                    <i class="fas fa-eye"></i>
+                  </button>
+                </td>
               </tr>
             `).join('')}
           </tbody>
@@ -835,6 +847,499 @@ async function renderAgents(container) {
       </div>
     </div>
   `;
+}
+
+// 显示代理分享链接模态框
+async function showAgentInviteModal(agentId, agentUsername) {
+  const result = await api(`/api/agents/${agentId}`);
+  if (!result.success) {
+    alert('加载代理信息失败');
+    return;
+  }
+  
+  const agent = result.data;
+  const baseUrl = window.location.origin;
+  
+  // 构建分享链接
+  let inviteLinks = [];
+  if (agent.invite_code) {
+    // 默认链接
+    inviteLinks.push({ label: '默认注册链接', url: `${baseUrl}/register?invite=${agent.invite_code}` });
+    
+    // 专属域名链接
+    if (agent.custom_domains) {
+      try {
+        const domains = JSON.parse(agent.custom_domains);
+        if (Array.isArray(domains)) {
+          domains.forEach(domain => {
+            inviteLinks.push({ label: `专属域名链接`, url: `https://${domain}/register?invite=${agent.invite_code}` });
+          });
+        }
+      } catch(e) {}
+    }
+  }
+  
+  const modal = document.createElement('div');
+  modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50';
+  modal.innerHTML = `
+    <div class="bg-gray-800 rounded-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="text-xl font-bold">
+          <i class="fas fa-share-alt text-primary mr-2"></i>
+          ${escapeHtml(agentUsername)} - 注册分享链接
+        </h3>
+        <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-white">
+          <i class="fas fa-times text-2xl"></i>
+        </button>
+      </div>
+      
+      <div class="space-y-4 mb-6">
+        <!-- 邀请码 -->
+        <div class="bg-gray-700 p-4 rounded-lg">
+          <label class="block text-sm text-gray-400 mb-2">邀请码</label>
+          <div class="flex gap-2">
+            <input type="text" value="${escapeHtml(agent.invite_code || '')}" readonly class="flex-1 bg-gray-900 border border-gray-600 rounded px-4 py-2 font-mono text-lg text-center">
+            <button onclick="copyToClipboard('${escapeJs(agent.invite_code || '')}')" class="px-4 py-2 bg-primary hover:bg-blue-700 rounded" title="复制">
+              <i class="fas fa-copy"></i>
+            </button>
+            <button onclick="regenerateInviteCode(${agentId})" class="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 rounded" title="重新生成">
+              <i class="fas fa-sync-alt"></i>
+            </button>
+          </div>
+        </div>
+        
+        <!-- 分享链接列表 -->
+        <div class="bg-gray-700 p-4 rounded-lg">
+          <label class="block text-sm text-gray-400 mb-3">注册链接</label>
+          ${inviteLinks.length > 0 ? inviteLinks.map((link, idx) => `
+            <div class="mb-3 ${idx > 0 ? 'pt-3 border-t border-gray-600' : ''}">
+              <p class="text-xs text-gray-400 mb-1">${escapeHtml(link.label)}</p>
+              <div class="flex gap-2">
+                <input type="text" value="${escapeHtml(link.url)}" readonly class="flex-1 bg-gray-900 border border-gray-600 rounded px-3 py-2 text-sm font-mono">
+                <button onclick="copyToClipboard('${escapeJs(link.url)}')" class="px-4 py-2 bg-green-600 hover:bg-green-700 rounded" title="复制链接">
+                  <i class="fas fa-copy"></i>
+                </button>
+              </div>
+            </div>
+          `).join('') : '<p class="text-gray-400 text-center py-4">请先设置邀请码</p>'}
+        </div>
+        
+        <!-- 链接状态开关 -->
+        <div class="bg-gray-700 p-4 rounded-lg flex justify-between items-center">
+          <div>
+            <label class="font-medium">分享链接状态</label>
+            <p class="text-sm text-gray-400">关闭后链接将失效</p>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" id="invite-status-${agentId}" ${agent.invite_link_status === 1 ? 'checked' : ''} onchange="toggleInviteStatus(${agentId}, this.checked)" class="sr-only peer">
+            <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+          </label>
+        </div>
+      </div>
+      
+      <div class="text-center">
+        <button onclick="this.closest('.fixed').remove()" class="px-6 py-2 bg-gray-600 hover:bg-gray-500 rounded-lg">
+          关闭
+        </button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+}
+
+// 重新生成邀请码
+async function regenerateInviteCode(agentId) {
+  if (!confirm('确定要重新生成邀请码吗？旧的邀请码将失效！')) return;
+  
+  const result = await api(`/api/agents/${agentId}/regenerate-invite`, { method: 'POST' });
+  if (result.success) {
+    alert('邀请码重新生成成功！');
+    document.querySelector('.fixed').remove();
+    loadModule('agents');
+  } else {
+    alert('重新生成失败: ' + result.error);
+  }
+}
+
+// 切换邀请链接状态
+async function toggleInviteStatus(agentId, enabled) {
+  const result = await api(`/api/agents/${agentId}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ invite_link_status: enabled ? 1 : 0 })
+  });
+  
+  if (result.success) {
+    alert(`分享链接已${enabled ? '启用' : '禁用'}`);
+  } else {
+    alert('操作失败: ' + result.error);
+    document.getElementById(`invite-status-${agentId}`).checked = !enabled;
+  }
+}
+
+// 显示编辑代理模态框
+async function showEditAgentModal(agentId) {
+  const result = await api(`/api/agents/${agentId}`);
+  if (!result.success) {
+    alert('加载代理信息失败');
+    return;
+  }
+  
+  const agent = result.data;
+  const domains = agent.custom_domains ? JSON.parse(agent.custom_domains) : [];
+  
+  const modal = document.createElement('div');
+  modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50';
+  modal.innerHTML = `
+    <div class="bg-gray-800 rounded-xl p-6 max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="text-xl font-bold">
+          <i class="fas fa-edit text-primary mr-2"></i>
+          编辑代理 - ${escapeHtml(agent.agent_username)}
+        </h3>
+        <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-white">
+          <i class="fas fa-times text-2xl"></i>
+        </button>
+      </div>
+      
+      <form id="edit-agent-form" class="space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm text-gray-400 mb-2">昵称</label>
+            <input type="text" name="nickname" value="${escapeHtml(agent.nickname || '')}" class="w-full bg-gray-700 border border-gray-600 rounded px-4 py-2">
+          </div>
+          
+          <div>
+            <label class="block text-sm text-gray-400 mb-2">级别</label>
+            <select name="level" disabled class="w-full bg-gray-700 border border-gray-600 rounded px-4 py-2">
+              <option value="shareholder" ${agent.level === 'shareholder' ? 'selected' : ''}>股东</option>
+              <option value="general_agent" ${agent.level === 'general_agent' ? 'selected' : ''}>总代理</option>
+              <option value="agent" ${agent.level === 'agent' ? 'selected' : ''}>代理</option>
+            </select>
+          </div>
+          
+          <div>
+            <label class="block text-sm text-gray-400 mb-2">占成比 (%)</label>
+            <input type="number" name="share_ratio" value="${(agent.share_ratio || 0) * 100}" min="0" max="100" step="0.1" class="w-full bg-gray-700 border border-gray-600 rounded px-4 py-2">
+          </div>
+          
+          <div>
+            <label class="block text-sm text-gray-400 mb-2">洗码率 (%)</label>
+            <input type="number" name="commission_ratio" value="${(agent.commission_ratio || 0) * 100}" min="0" max="100" step="0.01" class="w-full bg-gray-700 border border-gray-600 rounded px-4 py-2">
+          </div>
+          
+          <div>
+            <label class="block text-sm text-gray-400 mb-2">联系电话</label>
+            <input type="text" name="contact_phone" value="${escapeHtml(agent.contact_phone || '')}" class="w-full bg-gray-700 border border-gray-600 rounded px-4 py-2">
+          </div>
+          
+          <div>
+            <label class="block text-sm text-gray-400 mb-2">联系邮箱</label>
+            <input type="email" name="contact_email" value="${escapeHtml(agent.contact_email || '')}" class="w-full bg-gray-700 border border-gray-600 rounded px-4 py-2">
+          </div>
+        </div>
+        
+        <!-- 专属域名绑定 -->
+        <div class="border-t border-gray-700 pt-4">
+          <label class="block text-sm text-gray-400 mb-3">
+            <i class="fas fa-globe text-primary mr-2"></i>
+            专属域名绑定
+            <span class="text-xs text-gray-500">(可绑定多个域名，用于生成专属注册链接)</span>
+          </label>
+          <div id="domains-list" class="space-y-2 mb-3">
+            ${domains.map((domain, idx) => `
+              <div class="flex gap-2">
+                <input type="text" value="${escapeHtml(domain)}" data-domain-idx="${idx}" class="flex-1 bg-gray-700 border border-gray-600 rounded px-4 py-2 domain-input" placeholder="example.com">
+                <button type="button" onclick="removeDomainField(${idx})" class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            `).join('')}
+          </div>
+          <button type="button" onclick="addDomainField()" class="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg text-sm">
+            <i class="fas fa-plus mr-2"></i>添加域名
+          </button>
+        </div>
+        
+        <div>
+          <label class="block text-sm text-gray-400 mb-2">备注</label>
+          <textarea name="notes" rows="3" class="w-full bg-gray-700 border border-gray-600 rounded px-4 py-2">${escapeHtml(agent.notes || '')}</textarea>
+        </div>
+        
+        <div class="flex gap-4 justify-end pt-4 border-t border-gray-700">
+          <button type="button" onclick="this.closest('.fixed').remove()" class="px-6 py-2 bg-gray-600 hover:bg-gray-500 rounded-lg">
+            取消
+          </button>
+          <button type="submit" class="px-6 py-2 bg-primary hover:bg-blue-700 rounded-lg">
+            <i class="fas fa-save mr-2"></i>保存
+          </button>
+        </div>
+      </form>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  
+  // 绑定表单提交
+  document.getElementById('edit-agent-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    await updateAgentInfo(agentId, modal);
+  });
+}
+
+// 添加域名输入框
+function addDomainField() {
+  const container = document.getElementById('domains-list');
+  const idx = container.children.length;
+  const div = document.createElement('div');
+  div.className = 'flex gap-2';
+  div.innerHTML = `
+    <input type="text" data-domain-idx="${idx}" class="flex-1 bg-gray-700 border border-gray-600 rounded px-4 py-2 domain-input" placeholder="example.com">
+    <button type="button" onclick="removeDomainField(${idx})" class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded">
+      <i class="fas fa-trash"></i>
+    </button>
+  `;
+  container.appendChild(div);
+}
+
+// 移除域名输入框
+function removeDomainField(idx) {
+  const input = document.querySelector(`[data-domain-idx="${idx}"]`);
+  if (input) {
+    input.closest('.flex').remove();
+  }
+}
+
+// 更新代理信息
+async function updateAgentInfo(agentId, modal) {
+  const form = document.getElementById('edit-agent-form');
+  const formData = new FormData(form);
+  
+  // 收集域名
+  const domainInputs = document.querySelectorAll('.domain-input');
+  const domains = Array.from(domainInputs)
+    .map(input => input.value.trim())
+    .filter(v => v !== '');
+  
+  // 验证域名
+  for (const domain of domains) {
+    const validateResult = await api('/api/agents/validate-domain', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ domain, agent_id: agentId })
+    });
+    
+    if (!validateResult.success) {
+      alert(validateResult.error);
+      return;
+    }
+  }
+  
+  const data = {
+    nickname: formData.get('nickname'),
+    share_ratio: parseFloat(formData.get('share_ratio')) / 100,
+    commission_ratio: parseFloat(formData.get('commission_ratio')) / 100,
+    contact_phone: formData.get('contact_phone'),
+    contact_email: formData.get('contact_email'),
+    notes: formData.get('notes'),
+    custom_domains: domains
+  };
+  
+  const result = await api(`/api/agents/${agentId}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  
+  if (result.success) {
+    alert('代理信息更新成功！');
+    modal.remove();
+    loadModule('agents');
+  } else {
+    alert('更新失败: ' + result.error);
+  }
+}
+
+// 查看代理详情
+async function viewAgentDetail(agentId) {
+  const result = await api(`/api/agents/${agentId}`);
+  if (!result.success) {
+    alert('加载详情失败');
+    return;
+  }
+  
+  const agent = result.data;
+  alert(`代理详情:\n\n账号: ${agent.agent_username}\n昵称: ${agent.nickname || '-'}\n级别: ${agent.level}\n占成比: ${(agent.share_ratio * 100).toFixed(1)}%\n洗码率: ${(agent.commission_ratio * 100).toFixed(2)}%\n邀请码: ${agent.invite_code || '未生成'}`);
+}
+
+// 显示新增代理模态框
+function showAddAgentModal() {
+  const modal = document.createElement('div');
+  modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50';
+  modal.innerHTML = `
+    <div class="bg-gray-800 rounded-xl p-6 max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="text-xl font-bold">
+          <i class="fas fa-plus text-primary mr-2"></i>
+          新增代理
+        </h3>
+        <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-white">
+          <i class="fas fa-times text-2xl"></i>
+        </button>
+      </div>
+      
+      <form id="add-agent-form" class="space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm text-gray-400 mb-2">账号 <span class="text-red-500">*</span></label>
+            <input type="text" name="agent_username" required class="w-full bg-gray-700 border border-gray-600 rounded px-4 py-2">
+          </div>
+          
+          <div>
+            <label class="block text-sm text-gray-400 mb-2">初始密码 <span class="text-red-500">*</span></label>
+            <input type="password" name="password" required class="w-full bg-gray-700 border border-gray-600 rounded px-4 py-2">
+          </div>
+          
+          <div>
+            <label class="block text-sm text-gray-400 mb-2">昵称</label>
+            <input type="text" name="nickname" class="w-full bg-gray-700 border border-gray-600 rounded px-4 py-2">
+          </div>
+          
+          <div>
+            <label class="block text-sm text-gray-400 mb-2">级别</label>
+            <select name="level" class="w-full bg-gray-700 border border-gray-600 rounded px-4 py-2">
+              <option value="agent">代理</option>
+              <option value="general_agent">总代理</option>
+              <option value="shareholder">股东</option>
+            </select>
+          </div>
+          
+          <div>
+            <label class="block text-sm text-gray-400 mb-2">占成比 (%)</label>
+            <input type="number" name="share_ratio" value="0" min="0" max="100" step="0.1" class="w-full bg-gray-700 border border-gray-600 rounded px-4 py-2">
+          </div>
+          
+          <div>
+            <label class="block text-sm text-gray-400 mb-2">洗码率 (%)</label>
+            <input type="number" name="commission_ratio" value="0" min="0" max="100" step="0.01" class="w-full bg-gray-700 border border-gray-600 rounded px-4 py-2">
+          </div>
+          
+          <div>
+            <label class="block text-sm text-gray-400 mb-2">联系电话</label>
+            <input type="text" name="contact_phone" class="w-full bg-gray-700 border border-gray-600 rounded px-4 py-2">
+          </div>
+          
+          <div>
+            <label class="block text-sm text-gray-400 mb-2">联系邮箱</label>
+            <input type="email" name="contact_email" class="w-full bg-gray-700 border border-gray-600 rounded px-4 py-2">
+          </div>
+        </div>
+        
+        <!-- 专属域名绑定 -->
+        <div class="border-t border-gray-700 pt-4">
+          <label class="block text-sm text-gray-400 mb-3">
+            <i class="fas fa-globe text-primary mr-2"></i>
+            专属域名绑定（可选）
+            <span class="text-xs text-gray-500">(可绑定多个域名)</span>
+          </label>
+          <div id="new-domains-list" class="space-y-2 mb-3"></div>
+          <button type="button" onclick="addNewDomainField()" class="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg text-sm">
+            <i class="fas fa-plus mr-2"></i>添加域名
+          </button>
+        </div>
+        
+        <div class="flex gap-4 justify-end pt-4 border-t border-gray-700">
+          <button type="button" onclick="this.closest('.fixed').remove()" class="px-6 py-2 bg-gray-600 hover:bg-gray-500 rounded-lg">
+            取消
+          </button>
+          <button type="submit" class="px-6 py-2 bg-primary hover:bg-blue-700 rounded-lg">
+            <i class="fas fa-plus mr-2"></i>创建
+          </button>
+        </div>
+      </form>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  
+  // 绑定表单提交
+  document.getElementById('add-agent-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    await createAgent(modal);
+  });
+}
+
+// 添加新增代理域名输入框
+function addNewDomainField() {
+  const container = document.getElementById('new-domains-list');
+  const idx = container.children.length;
+  const div = document.createElement('div');
+  div.className = 'flex gap-2';
+  div.innerHTML = `
+    <input type="text" data-new-domain-idx="${idx}" class="flex-1 bg-gray-700 border border-gray-600 rounded px-4 py-2 new-domain-input" placeholder="example.com">
+    <button type="button" onclick="removeNewDomainField(${idx})" class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded">
+      <i class="fas fa-trash"></i>
+    </button>
+  `;
+  container.appendChild(div);
+}
+
+// 移除新增代理域名输入框
+function removeNewDomainField(idx) {
+  const input = document.querySelector(`[data-new-domain-idx="${idx}"]`);
+  if (input) {
+    input.closest('.flex').remove();
+  }
+}
+
+// 创建代理
+async function createAgent(modal) {
+  const form = document.getElementById('add-agent-form');
+  const formData = new FormData(form);
+  
+  // 收集域名
+  const domainInputs = document.querySelectorAll('.new-domain-input');
+  const domains = Array.from(domainInputs)
+    .map(input => input.value.trim())
+    .filter(v => v !== '');
+  
+  // 验证域名
+  for (const domain of domains) {
+    const validateResult = await api('/api/agents/validate-domain', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ domain })
+    });
+    
+    if (!validateResult.success) {
+      alert(validateResult.error);
+      return;
+    }
+  }
+  
+  const data = {
+    agent_username: formData.get('agent_username'),
+    password: formData.get('password'),
+    nickname: formData.get('nickname'),
+    level: formData.get('level'),
+    share_ratio: parseFloat(formData.get('share_ratio')) / 100,
+    commission_ratio: parseFloat(formData.get('commission_ratio')) / 100,
+    contact_phone: formData.get('contact_phone'),
+    contact_email: formData.get('contact_email'),
+    custom_domains: domains
+  };
+  
+  const result = await api('/api/agents', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  
+  if (result.success) {
+    alert(`代理创建成功！\n邀请码: ${result.data.invite_code}`);
+    modal.remove();
+    loadModule('agents');
+  } else {
+    alert('创建失败: ' + result.error);
+  }
 }
 
 // =====================

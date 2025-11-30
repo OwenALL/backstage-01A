@@ -13,11 +13,31 @@
 
 ---
 
+## 🌐 在线演示地址
+
+### 系统总管理后台
+- **永久访问**: `https://webapp.pages.dev/` （部署后生效）
+- **沙箱演示**: https://3000-iuwuqi7rz0v5niuhr74wf-cc2fbc16.sandbox.novita.ai/
+- **管理员账号**: `admin`
+- **管理员密码**: `admin123`
+- ⚠️ **生产环境请立即修改密码！**
+
+### 代理管理后台
+- **永久访问**: `https://webapp.pages.dev/agent.html` （部署后生效）
+- **沙箱演示**: https://3000-iuwuqi7rz0v5niuhr74wf-cc2fbc16.sandbox.novita.ai/agent.html
+- **股东账号**: `shareholder01` / `test123`
+- **代理账号**: `agent01` / `test123`
+- ⚠️ **生产环境请立即修改密码！**
+
+> 💡 **部署说明**: 永久地址需要部署到Cloudflare Pages后生效。详细部署步骤请查看 [PRODUCTION_DEPLOY.md](./PRODUCTION_DEPLOY.md)
+
+---
+
 ## 一、系统总管理后台
 
-### 访问地址
-- **生产环境**: `https://your-domain.pages.dev/`
-- **测试账号**: `admin` / `admin123`
+### 访问说明
+- **沙箱环境**: 用于测试和演示，数据可能随时重置
+- **生产环境**: 需要部署到Cloudflare Pages，获得永久访问地址
 
 ### 核心功能模块
 
@@ -132,6 +152,43 @@
 - **交易明细**: 查看所有账户交易
 - **类型筛选**: 按交易类型筛选
 - **余额变动**: 实时显示余额变化
+
+---
+
+## 🚀 快速部署到生产环境
+
+### 一键部署命令
+```bash
+# 1. 克隆仓库
+git clone https://github.com/CNWEN123/backstage-01A.git
+cd backstage-01A
+
+# 2. 安装依赖
+npm install
+
+# 3. 登录Cloudflare
+wrangler login
+
+# 4. 创建D1数据库
+wrangler d1 create webapp-production
+
+# 5. 应用数据库迁移
+wrangler d1 migrations apply webapp-production
+
+# 6. 构建项目
+npm run build
+
+# 7. 部署到Cloudflare Pages
+wrangler pages deploy dist --project-name webapp
+```
+
+### 部署后配置
+1. 在 Cloudflare Dashboard 绑定 D1 数据库
+2. 修改所有默认密码
+3. 启用2FA双因素认证
+4. 配置访问限制
+
+📖 **详细部署指南**: [PRODUCTION_DEPLOY.md](./PRODUCTION_DEPLOY.md)
 
 ---
 

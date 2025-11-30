@@ -2125,7 +2125,7 @@ async function renderFinance(container) {
               <td class="p-4">${getStatusBadge(w.status, 'withdraw')}</td>
               <td class="p-4 text-sm text-gray-400">${formatDateTime(w.created_at)}</td>
               <td class="p-4">
-                <button onclick="approveWithdraw(${w.id})" class="text-green-400 hover:text-green-300 mr-2" title="通过"><i class="fas fa-check"></i></button>
+                <button onclick="approveWithdraw(${w.id}, ${w.amount})" class="text-green-400 hover:text-green-300 mr-2" title="通过"><i class="fas fa-check"></i></button>
                 <button onclick="rejectWithdraw(${w.id})" class="text-red-400 hover:text-red-300 mr-2" title="拒绝"><i class="fas fa-times"></i></button>
               </td>
             </tr>
@@ -2163,7 +2163,7 @@ async function renderFinance(container) {
               <td class="p-4">${getStatusBadge(d.status, 'deposit')}</td>
               <td class="p-4 text-sm text-gray-400">${formatDateTime(d.created_at)}</td>
               <td class="p-4">
-                <button onclick="approveDeposit(${d.id})" class="text-green-400 hover:text-green-300 mr-2" title="通过"><i class="fas fa-check"></i></button>
+                <button onclick="approveDeposit(${d.id}, ${d.amount})" class="text-green-400 hover:text-green-300 mr-2" title="通过"><i class="fas fa-check"></i></button>
                 <button onclick="rejectDeposit(${d.id})" class="text-red-400 hover:text-red-300 mr-2" title="拒绝"><i class="fas fa-times"></i></button>
               </td>
             </tr>
@@ -3151,16 +3151,22 @@ async function submitManualDeposit(e) {
   
   if (!confirm(`确定为玩家ID ${data.player_id} 存入 $${data.amount}？`)) return;
   
+  // 验证财务密码
+  const verified = await verifyFinancePassword('manual_deposit', data.amount);
+  if (!verified) {
+    return; // 验证失败，不执行存款
+  }
+  
   const result = await api('/api/manual-deposit', {
     method: 'POST',
     body: JSON.stringify(data)
   });
   
   if (result.success) {
-    alert(`存款成功！\n订单号: ${result.data.order_no}\n新余额: $${result.data.new_balance}`);
+    showSuccess(`存款成功！\n订单号: ${result.data.order_no}\n新余额: $${result.data.new_balance}`);
     form.reset();
   } else {
-    alert('存款失败: ' + result.error);
+    showError('存款失败: ' + result.error);
   }
 }
 
@@ -3180,28 +3186,45 @@ async function submitManualWithdraw(e) {
   
   if (!confirm(`确定为玩家ID ${data.player_id} 取出 $${data.amount}？`)) return;
   
+  // 验证财务密码
+  const verified = await verifyFinancePassword('manual_withdrawal', data.amount);
+  if (!verified) {
+    return; // 验证失败，不执行取款
+  }
+  
   const result = await api('/api/manual-withdraw', {
     method: 'POST',
     body: JSON.stringify(data)
   });
   
   if (result.success) {
-    alert(`取款成功！\n订单号: ${result.data.order_no}\n新余额: $${result.data.new_balance}`);
+    showSuccess(`取款成功！\n订单号: ${result.data.order_no}\n新余额: $${result.data.new_balance}`);
     form.reset();
   } else {
-    alert('取款失败: ' + result.error);
+    showError('取款失败: ' + result.error);
   }
 }
 
 // 存款审核
-async function approveDeposit(id) {
+async function approveDeposit(id, amount) {
   if (!confirm('确定通过该存款申请？')) return;
+  
+  // 验证财务密码
+  const verified = await verifyFinancePassword('deposit_approval', amount || 0);
+  if (!verified) {
+    return; // 验证失败，不执行审批
+  }
+  
   const result = await api(`/api/deposits/${id}`, {
     method: 'PUT',
     body: JSON.stringify({ status: 2, reviewer_id: currentUser?.id, reviewer_name: currentUser?.nickname })
   });
-  if (result.success) loadModule('finance');
-  else alert(result.error);
+  if (result.success) {
+    showSuccess('存款审核通过');
+    loadModule('finance');
+  } else {
+    showError(result.error);
+  }
 }
 
 async function rejectDeposit(id) {
@@ -3215,14 +3238,25 @@ async function rejectDeposit(id) {
   else alert(result.error);
 }
 
-async function approveWithdraw(id) {
+async function approveWithdraw(id, amount) {
   if (!confirm('确定通过该提款申请？')) return;
+  
+  // 验证财务密码
+  const verified = await verifyFinancePassword('withdrawal_approval', amount || 0);
+  if (!verified) {
+    return; // 验证失败，不执行审批
+  }
+  
   const result = await api(`/api/withdraws/${id}`, {
     method: 'PUT',
     body: JSON.stringify({ status: 4, reviewer_id: currentUser?.id, reviewer_name: currentUser?.nickname })
   });
-  if (result.success) loadModule('finance');
-  else alert(result.error);
+  if (result.success) {
+    showSuccess('提款审核通过');
+    loadModule('finance');
+  } else {
+    showError(result.error);
+  }
 }
 
 async function rejectWithdraw(id) {
@@ -5067,6 +5101,12 @@ async function submitBonusPayout(event) {
     return;
   }
   
+  // 验证财务密码
+  const verified = await verifyFinancePassword('bonus_payout', amount);
+  if (!verified) {
+    return; // 验证失败，不执行派发
+  }
+  
   try {
     const result = await api('/api/bonus/payout', {
       method: 'POST',
@@ -5082,15 +5122,15 @@ async function submitBonusPayout(event) {
     });
     
     if (result.success) {
-      alert('红利派发成功！');
+      showSuccess('红利派发成功！');
       document.getElementById('bonus-payout-form').reset();
       document.getElementById('bonus-preview').style.display = 'none';
       loadBonusHistory();
     } else {
-      alert('派发失败: ' + result.error);
+      showError('派发失败: ' + result.error);
     }
   } catch (error) {
-    alert('派发失败: ' + error.message);
+    showError('派发失败: ' + error.message);
   }
 }
 

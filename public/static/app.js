@@ -4573,7 +4573,7 @@ async function renderCommission(container) {
               <th class="text-left p-4">游戏类型</th>
               <th class="text-left p-4">有效投注</th>
               <th class="text-left p-4">洗码比例</th>
-              <th class="text-left p-4">返水金额</th>
+              <th class="text-left p-4">洗码费</th>
               <th class="text-left p-4">状态</th>
               <th class="text-left p-4">操作</th>
             </tr>
@@ -7174,18 +7174,18 @@ async function renderReports(container) {
     
     <!-- Tabs -->
     <div class="flex flex-wrap gap-2 mb-6">
-      <button id="tab-bet-details" onclick="switchReportTab('bet-details')" class="px-4 py-2 bg-primary rounded-lg text-sm"><i class="fas fa-file-invoice mr-1"></i>1. 注单明细</button>
-      <button id="tab-settle" onclick="switchReportTab('settle')" class="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 text-sm"><i class="fas fa-calculator mr-1"></i>2. 结算报表</button>
-      <button id="tab-profit-share" onclick="switchReportTab('profit-share')" class="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 text-sm"><i class="fas fa-chart-pie mr-1"></i>3. 盈利分成</button>
-      <button id="tab-ranking" onclick="switchReportTab('ranking')" class="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 text-sm"><i class="fas fa-trophy mr-1"></i>4. 盈亏排行</button>
-      <button id="tab-game-report" onclick="switchReportTab('game-report')" class="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 text-sm"><i class="fas fa-gamepad mr-1"></i>5. 游戏报表</button>
-      <button id="tab-daily-report" onclick="switchReportTab('daily-report')" class="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 text-sm"><i class="fas fa-calendar-day mr-1"></i>6. 盈亏日报</button>
-      <button id="tab-agent-perf" onclick="switchReportTab('agent-perf')" class="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 text-sm"><i class="fas fa-users mr-1"></i>7. 代理业绩</button>
-      <button id="tab-transfers" onclick="switchReportTab('transfers')" class="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 text-sm"><i class="fas fa-exchange-alt mr-1"></i>8. 转账记录</button>
+      <button id="tab-daily-report" onclick="switchReportTab('daily-report')" class="px-4 py-2 bg-primary rounded-lg text-sm"><i class="fas fa-calendar-day mr-1"></i>盈亏日报</button>
+      <button id="tab-ranking" onclick="switchReportTab('ranking')" class="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 text-sm"><i class="fas fa-trophy mr-1"></i>盈亏排行</button>
+      <button id="tab-game-report" onclick="switchReportTab('game-report')" class="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 text-sm"><i class="fas fa-gamepad mr-1"></i>游戏报表</button>
+      <button id="tab-bet-details" onclick="switchReportTab('bet-details')" class="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 text-sm"><i class="fas fa-file-invoice mr-1"></i>注单明细</button>
+      <button id="tab-agent-perf" onclick="switchReportTab('agent-perf')" class="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 text-sm"><i class="fas fa-users mr-1"></i>代理业绩</button>
+      <button id="tab-profit-share" onclick="switchReportTab('profit-share')" class="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 text-sm"><i class="fas fa-chart-pie mr-1"></i>盈利分成</button>
+      <button id="tab-settle" onclick="switchReportTab('settle')" class="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 text-sm"><i class="fas fa-calculator mr-1"></i>结算报表</button>
+      <button id="tab-transfers" onclick="switchReportTab('transfers')" class="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 text-sm"><i class="fas fa-exchange-alt mr-1"></i>转账记录</button>
     </div>
     
-    <!-- 1. 注单明细 -->
-    <div id="report-bet-details" class="bg-gray-800 rounded-xl overflow-hidden">
+    <!-- 注单明细 -->
+    <div id="report-bet-details" class="hidden bg-gray-800 rounded-xl overflow-hidden">
       <!-- 查询栏 -->
       <div class="bg-gradient-to-r from-gray-750 to-gray-800 px-4 py-4 border-b border-gray-700">
         <div class="flex flex-wrap gap-3 items-end">
@@ -7393,8 +7393,8 @@ async function renderReports(container) {
       </div>
     </div>
 
-    <!-- 6. 盈亏日报（原每日盈亏汇总） -->
-    <div id="report-daily-report" class="hidden bg-gray-800 rounded-xl overflow-hidden">
+    <!-- 盈亏日报（原每日盈亏汇总） -->
+    <div id="report-daily-report" class="bg-gray-800 rounded-xl overflow-hidden">
       <div class="bg-gradient-to-r from-gray-750 to-gray-800 px-4 py-4 border-b border-gray-700">
         <div class="flex flex-wrap gap-3 items-end">
           <div class="flex-1 min-w-[140px]">

@@ -611,6 +611,91 @@ app.get('/api/agents/:id', async (c) => {
   }
 })
 
+// 获取代理业绩
+app.get('/api/agents/:id/performance', async (c) => {
+  const db = c.env.DB
+  const id = c.req.param('id')
+  
+  try {
+    // 获取代理基本信息
+    const agent = await db.prepare('SELECT * FROM agents WHERE id = ?').bind(id).first()
+    if (!agent) {
+      return c.json({ success: false, error: 'Agent not found' }, 404)
+    }
+    
+    // 获取所有下级代理
+    const subAgents = await db.prepare(`
+      SELECT id, agent_username as username, level, parent_agent_id 
+      FROM agents 
+      WHERE parent_agent_id = ?
+    `).bind(id).all()
+    
+    // 获取代理下所有玩家的统计
+    const playerStats = await db.prepare(`
+      SELECT 
+        COUNT(*) as total_players,
+        SUM(balance) as total_balance,
+        SUM(total_bet) as total_bet,
+        SUM(total_win_loss) as total_win_loss,
+        SUM(total_deposit) as total_deposit,
+        SUM(total_withdraw) as total_withdraw
+      FROM players 
+      WHERE agent_id = ?
+    `).bind(id).first()
+    
+    // 计算总佣金（简化版本，使用总和）
+    const commissionStats = await db.prepare(`
+      SELECT 
+        SUM(total_commission) as total_commission
+      FROM players 
+      WHERE agent_id = ?
+    `).bind(id).first()
+    
+    // 统计下级代理信息
+    const subAgentDetails = []
+    for (const sub of subAgents.results || []) {
+      const subPlayerStats = await db.prepare(`
+        SELECT 
+          COUNT(*) as player_count,
+          SUM(total_bet) as total_bet
+        FROM players 
+        WHERE agent_id = ?
+      `).bind(sub.id).first()
+      
+      const subAgentCount = await db.prepare(
+        'SELECT COUNT(*) as count FROM agents WHERE parent_agent_id = ?'
+      ).bind(sub.id).first()
+      
+      subAgentDetails.push({
+        id: sub.id,
+        username: sub.username,
+        level: sub.level,
+        sub_count: subAgentCount?.count || 0,
+        player_count: subPlayerStats?.player_count || 0,
+        total_bet: subPlayerStats?.total_bet || 0
+      })
+    }
+    
+    const performance = {
+      total_members: (subAgents.results?.length || 0) + (playerStats?.total_players || 0),
+      total_players: playerStats?.total_players || 0,
+      total_bet: playerStats?.total_bet || 0,
+      total_win_loss: playerStats?.total_win_loss || 0,
+      total_commission: commissionStats?.total_commission || 0,
+      month_bet: playerStats?.total_bet || 0,  // 使用总投注作为月度数据
+      month_payout: 0,  // 暂不统计
+      month_profit: playerStats?.total_win_loss || 0,  // 使用总盈亏
+      month_commission: commissionStats?.total_commission || 0,  // 使用总佣金
+      sub_agents: subAgentDetails
+    }
+    
+    return c.json({ success: true, data: performance })
+  } catch (error) {
+    console.error('Get agent performance error:', error)
+    return c.json({ success: false, error: String(error) }, 500)
+  }
+})
+
 // 新增代理
 app.post('/api/agents', async (c) => {
   const db = c.env.DB
@@ -7147,7 +7232,7 @@ app.get('*', (c) => {
     </main>
   </div>
 
-  <script src="/static/app.js?v=20251130-24"></script>
+  <script src="/static/app.js?v=20251130-25"></script>
 </body>
 </html>
   `)

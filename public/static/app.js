@@ -6948,32 +6948,34 @@ async function renderReports(container) {
     <div id="report-settle" class="hidden bg-gray-800 rounded-xl overflow-hidden">
       <!-- 查询栏 -->
       <div class="bg-gradient-to-r from-gray-750 to-gray-800 px-4 py-4 border-b border-gray-700">
-        <div class="flex flex-wrap gap-3 items-end">
-          <!-- 快捷日期 -->
-          <div class="flex-1 min-w-[200px]">
-            <label class="text-gray-300 text-xs block mb-1.5 font-medium">快捷日期</label>
-            <div class="flex gap-1 flex-wrap">
-              <button onclick="setSettleDateRange('today')" class="px-3 py-1.5 bg-gray-600 hover:bg-primary rounded text-xs transition-all shadow-sm">今日</button>
-              <button onclick="setSettleDateRange('yesterday')" class="px-3 py-1.5 bg-gray-600 hover:bg-primary rounded text-xs transition-all shadow-sm">昨日</button>
-              <button onclick="setSettleDateRange('week')" class="px-3 py-1.5 bg-gray-600 hover:bg-primary rounded text-xs transition-all shadow-sm">本周</button>
-              <button onclick="setSettleDateRange('month')" class="px-3 py-1.5 bg-gray-600 hover:bg-primary rounded text-xs transition-all shadow-sm">本月</button>
-              <button onclick="setSettleDateRange('lastmonth')" class="px-3 py-1.5 bg-gray-600 hover:bg-primary rounded text-xs transition-all shadow-sm">上月</button>
-            </div>
+        <!-- 第一行：快捷日期 -->
+        <div class="mb-3">
+          <label class="text-gray-300 text-xs block mb-1.5 font-medium">快捷日期</label>
+          <div class="flex gap-2">
+            <button onclick="setSettleDateRange('today')" class="px-4 py-2 bg-gray-600 hover:bg-primary rounded text-xs font-medium transition-all shadow-sm">今日</button>
+            <button onclick="setSettleDateRange('yesterday')" class="px-4 py-2 bg-gray-600 hover:bg-primary rounded text-xs font-medium transition-all shadow-sm">昨日</button>
+            <button onclick="setSettleDateRange('week')" class="px-4 py-2 bg-gray-600 hover:bg-primary rounded text-xs font-medium transition-all shadow-sm">本周</button>
+            <button onclick="setSettleDateRange('month')" class="px-4 py-2 bg-gray-600 hover:bg-primary rounded text-xs font-medium transition-all shadow-sm">本月</button>
+            <button onclick="setSettleDateRange('lastmonth')" class="px-4 py-2 bg-gray-600 hover:bg-primary rounded text-xs font-medium transition-all shadow-sm">上月</button>
           </div>
-          
-          <!-- 日期范围 -->
-          <div class="flex-1 min-w-[180px]">
+        </div>
+        
+        <!-- 第二行：日期范围和筛选条件 -->
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-3">
+          <!-- 开始时间 -->
+          <div>
             <label class="text-gray-300 text-xs block mb-1.5 font-medium">开始时间</label>
             <input type="datetime-local" id="settle-start-date" value="${dayjs().startOf('month').format('YYYY-MM-DDTHH:mm')}" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none transition-all">
           </div>
           
-          <div class="flex-1 min-w-[180px]">
+          <!-- 结束时间 -->
+          <div>
             <label class="text-gray-300 text-xs block mb-1.5 font-medium">结束时间</label>
             <input type="datetime-local" id="settle-end-date" value="${dayjs().format('YYYY-MM-DDTHH:mm')}" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none transition-all">
           </div>
           
           <!-- 游戏类型 -->
-          <div class="flex-1 min-w-[140px]">
+          <div>
             <label class="text-gray-300 text-xs block mb-1.5 font-medium">游戏类型</label>
             <select id="settle-game-type" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none transition-all">
               <option value="">全部游戏</option>
@@ -6987,7 +6989,7 @@ async function renderReports(container) {
           </div>
           
           <!-- 业务模式 -->
-          <div class="flex-1 min-w-[120px]">
+          <div>
             <label class="text-gray-300 text-xs block mb-1.5 font-medium">业务模式</label>
             <select id="settle-business-mode" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none transition-all">
               <option value="">全部</option>
@@ -6996,8 +6998,8 @@ async function renderReports(container) {
             </select>
           </div>
           
-          <!-- 交易货币 -->
-          <div class="flex-1 min-w-[120px]">
+          <!-- 货币类型 -->
+          <div>
             <label class="text-gray-300 text-xs block mb-1.5 font-medium">货币类型</label>
             <select id="settle-currency" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none transition-all">
               <option value="">全部货币</option>
@@ -7008,7 +7010,7 @@ async function renderReports(container) {
           </div>
           
           <!-- 用户类型 -->
-          <div class="flex-1 min-w-[120px]">
+          <div>
             <label class="text-gray-300 text-xs block mb-1.5 font-medium">用户类型</label>
             <select id="settle-user-type" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none transition-all">
               <option value="real" selected>正式用户</option>
@@ -7016,19 +7018,19 @@ async function renderReports(container) {
               <option value="all">全部用户</option>
             </select>
           </div>
-          
-          <!-- 操作按钮 -->
-          <div class="flex gap-2">
-            <button onclick="loadSettleReport()" class="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 px-5 py-2 rounded-lg text-sm font-medium shadow-lg shadow-red-900/30 transition-all">
-              <i class="fas fa-search mr-1.5"></i>查询
-            </button>
-            <button onclick="exportReport('settle')" class="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 px-5 py-2 rounded-lg text-sm font-medium shadow-lg shadow-green-900/30 transition-all">
-              <i class="fas fa-file-excel mr-1.5"></i>导出
-            </button>
-            <button onclick="resetSettleFilters()" class="bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 px-5 py-2 rounded-lg text-sm font-medium shadow-lg transition-all">
-              <i class="fas fa-redo mr-1.5"></i>重置
-            </button>
-          </div>
+        </div>
+        
+        <!-- 第三行：操作按钮 -->
+        <div class="flex gap-2 justify-end">
+          <button onclick="loadSettleReport()" class="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 px-6 py-2 rounded-lg text-sm font-medium shadow-lg shadow-red-900/30 transition-all">
+            <i class="fas fa-search mr-1.5"></i>查询
+          </button>
+          <button onclick="exportReport('settle')" class="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 px-5 py-2 rounded-lg text-sm font-medium shadow-lg shadow-green-900/30 transition-all">
+            <i class="fas fa-file-excel mr-1.5"></i>导出
+          </button>
+          <button onclick="resetSettleFilters()" class="bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 px-5 py-2 rounded-lg text-sm font-medium shadow-lg transition-all">
+            <i class="fas fa-redo mr-1.5"></i>重置
+          </button>
         </div>
       </div>
       

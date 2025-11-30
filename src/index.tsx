@@ -8164,6 +8164,174 @@ app.get('/api/agent/game-report', async (c) => {
   }
 })
 
+// 股东/代理后台 - 玩家游戏详细记录 API
+app.get('/api/agent/player-game-detail', async (c) => {
+  const db = c.env.DB
+  const playerUsername = c.req.query('player_username') || ''
+  const startDate = c.req.query('start_date') || ''
+  const endDate = c.req.query('end_date') || ''
+  
+  try {
+    // 模拟玩家详细游戏投注记录
+    const mockDetailData = {
+      player_username: playerUsername,
+      summary: {
+        totalBet: 850000,
+        validBet: 807500,
+        totalWinLoss: -125000,
+        totalWashFee: 16150
+      },
+      list: [
+        {
+          game_id: 'G20241130101',
+          game_type: 'baccarat',
+          game_type_display: '百家乐',
+          table_name: 'VIP桌台A',
+          round_id: 'R2024113010145',
+          bet_option: '庄',
+          bet_amount: 50000,
+          valid_bet: 47500,
+          win_loss: -50000,
+          wash_code_fee: 950,
+          bet_time: '2024-11-30 14:35:22',
+          settle_time: '2024-11-30 14:36:08'
+        },
+        {
+          game_id: 'G20241130102',
+          game_type: 'baccarat',
+          game_type_display: '百家乐',
+          table_name: 'VIP桌台A',
+          round_id: 'R2024113010146',
+          bet_option: '闲',
+          bet_amount: 30000,
+          valid_bet: 28500,
+          win_loss: 30000,
+          wash_code_fee: 570,
+          bet_time: '2024-11-30 14:38:15',
+          settle_time: '2024-11-30 14:39:02'
+        },
+        {
+          game_id: 'G20241130103',
+          game_type: 'baccarat',
+          game_type_display: '百家乐',
+          table_name: 'VIP桌台B',
+          round_id: 'R2024113010201',
+          bet_option: '庄对',
+          bet_amount: 10000,
+          valid_bet: 10000,
+          win_loss: -10000,
+          wash_code_fee: 200,
+          bet_time: '2024-11-30 14:42:33',
+          settle_time: '2024-11-30 14:43:18'
+        },
+        {
+          game_id: 'G20241130104',
+          game_type: 'roulette',
+          game_type_display: '轮盘',
+          table_name: '轮盘桌1号',
+          round_id: 'R2024113010301',
+          bet_option: '红色',
+          bet_amount: 20000,
+          valid_bet: 19000,
+          win_loss: 20000,
+          wash_code_fee: 380,
+          bet_time: '2024-11-30 14:45:10',
+          settle_time: '2024-11-30 14:45:55'
+        },
+        {
+          game_id: 'G20241130105',
+          game_type: 'baccarat',
+          game_type_display: '百家乐',
+          table_name: 'VIP桌台A',
+          round_id: 'R2024113010147',
+          bet_option: '庄',
+          bet_amount: 80000,
+          valid_bet: 76000,
+          win_loss: -80000,
+          wash_code_fee: 1520,
+          bet_time: '2024-11-30 14:50:22',
+          settle_time: '2024-11-30 14:51:10'
+        },
+        {
+          game_id: 'G20241130106',
+          game_type: 'dragontiger',
+          game_type_display: '龙虎',
+          table_name: '龙虎桌1号',
+          round_id: 'R2024113010401',
+          bet_option: '龙',
+          bet_amount: 25000,
+          valid_bet: 23750,
+          win_loss: 25000,
+          wash_code_fee: 475,
+          bet_time: '2024-11-30 15:05:40',
+          settle_time: '2024-11-30 15:06:15'
+        },
+        {
+          game_id: 'G20241130107',
+          game_type: 'baccarat',
+          game_type_display: '百家乐',
+          table_name: 'VIP桌台C',
+          round_id: 'R2024113010501',
+          bet_option: '闲',
+          bet_amount: 100000,
+          valid_bet: 95000,
+          win_loss: -100000,
+          wash_code_fee: 1900,
+          bet_time: '2024-11-30 15:15:28',
+          settle_time: '2024-11-30 15:16:20'
+        },
+        {
+          game_id: 'G20241130108',
+          game_type: 'sicbo',
+          game_type_display: '骰宝',
+          table_name: '骰宝桌1号',
+          round_id: 'R2024113010601',
+          bet_option: '大',
+          bet_amount: 15000,
+          valid_bet: 14250,
+          win_loss: 15000,
+          wash_code_fee: 285,
+          bet_time: '2024-11-30 15:22:18',
+          settle_time: '2024-11-30 15:23:05'
+        },
+        {
+          game_id: 'G20241130109',
+          game_type: 'baccarat',
+          game_type_display: '百家乐',
+          table_name: 'VIP桌台A',
+          round_id: 'R2024113010148',
+          bet_option: '庄',
+          bet_amount: 60000,
+          valid_bet: 57000,
+          win_loss: 60000,
+          wash_code_fee: 1140,
+          bet_time: '2024-11-30 15:30:45',
+          settle_time: '2024-11-30 15:31:32'
+        },
+        {
+          game_id: 'G20241130110',
+          game_type: 'baccarat',
+          game_type_display: '百家乐',
+          table_name: 'VIP桌台B',
+          round_id: 'R2024113010202',
+          bet_option: '闲对',
+          bet_amount: 10000,
+          valid_bet: 10000,
+          win_loss: -10000,
+          wash_code_fee: 200,
+          bet_time: '2024-11-30 15:38:55',
+          settle_time: '2024-11-30 15:39:40'
+        }
+      ],
+      total: 10
+    }
+    
+    return c.json({ success: true, data: mockDetailData })
+  } catch (error) {
+    return c.json({ success: false, error: String(error) }, 500)
+  }
+})
+
 app.get('*', (c) => {
   return c.html(`
 <!DOCTYPE html>

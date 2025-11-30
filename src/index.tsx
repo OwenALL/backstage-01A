@@ -7653,7 +7653,7 @@ app.get('/agent.html', (c) => {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>股东/代理后台管理系统</title>
+  <title>代理后台管理系统</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -7704,7 +7704,7 @@ app.get('/agent.html', (c) => {
         <div class="inline-block p-4 bg-primary rounded-full mb-4">
           <i class="fas fa-user-tie text-4xl text-white"></i>
         </div>
-        <h1 class="text-3xl font-bold text-white mb-2">股东/代理后台</h1>
+        <h1 class="text-3xl font-bold text-white mb-2">代理后台</h1>
         <p class="text-gray-400">真人荷官视讯平台</p>
       </div>
       <form id="login-form" onsubmit="handleLogin(event)">
@@ -7714,7 +7714,7 @@ app.get('/agent.html', (c) => {
           </label>
           <input type="text" name="username" required
                  class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary"
-                 placeholder="请输入股东/代理账号">
+                 placeholder="请输入代理账号">
         </div>
         <div class="mb-6">
           <label class="block text-gray-300 text-sm font-semibold mb-2">

@@ -2087,7 +2087,7 @@ async function renderFinance(container) {
       <button id="tab-withdraw" onclick="switchFinanceTab('withdraw')" class="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600">提款审核 <span class="bg-red-500 text-xs px-2 py-0.5 rounded-full ml-1">${withdraws.length}</span></button>
       <button id="tab-deposit" onclick="switchFinanceTab('deposit')" class="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600">存款审核 <span class="bg-yellow-500 text-xs px-2 py-0.5 rounded-full ml-1">${deposits.length}</span></button>
       <button id="tab-payment" onclick="switchFinanceTab('payment')" class="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600">收款方式设置</button>
-      <button id="tab-finance-password" onclick="switchFinanceTab('finance-password')" class="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600"><i class="fas fa-key mr-1"></i>财务密码设置</button>
+      <button id="tab-password" onclick="switchFinanceTab('password')" class="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600"><i class="fas fa-key mr-1"></i>财务密码设置</button>
     </div>
     
     <!-- 提款审核 -->
@@ -2700,7 +2700,7 @@ function switchFinanceTab(tab) {
   // 加载对应数据
   if (tab === 'transfer-fee') {
     loadTransferFeeConfigs();
-  } else if (tab === 'finance-password') {
+  } else if (tab === 'password') {
     loadFinancePasswordConfig();
   }
 }

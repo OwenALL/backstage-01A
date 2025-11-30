@@ -7232,7 +7232,7 @@ app.get('*', (c) => {
     </main>
   </div>
 
-  <script src="/static/app.js?v=20251130-28"></script>
+  <script src="/static/app.js?v=20251130-29"></script>
 </body>
 </html>
   `)

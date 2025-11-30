@@ -2183,7 +2183,7 @@ async function renderFinance(container) {
             <div class="space-y-4">
               <div>
                 <label class="block text-gray-400 text-sm mb-2">玩家ID *</label>
-                <input type="number" name="player_id" required class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-primary" placeholder="输入玩家ID">
+                <input type="text" inputmode="numeric" pattern="[0-9]*" name="player_id" id="deposit-player-id" required autocomplete="off" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-primary" placeholder="输入玩家ID">
               </div>
               <div>
                 <label class="block text-gray-400 text-sm mb-2">存款金额 *</label>
@@ -2216,7 +2216,7 @@ async function renderFinance(container) {
             <div class="space-y-4">
               <div>
                 <label class="block text-gray-400 text-sm mb-2">玩家ID *</label>
-                <input type="number" name="player_id" required class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-primary" placeholder="输入玩家ID">
+                <input type="text" inputmode="numeric" pattern="[0-9]*" name="player_id" id="withdraw-player-id" required autocomplete="off" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-primary" placeholder="输入玩家ID">
               </div>
               <div>
                 <label class="block text-gray-400 text-sm mb-2">取款金额 *</label>

@@ -7399,4 +7399,253 @@ app.get('*', (c) => {
   `)
 })
 
+// ========================================
+// 股东/代理后台 API
+// ========================================
+
+// 股东/代理登录
+app.post('/api/agent/login', async (c) => {
+  const db = c.env.DB
+  const { username, password } = await c.req.json()
+  
+  try {
+    // 查询代理账号
+    const agent = await db.prepare(`
+      SELECT id, agent_username, nickname, level, status, parent_agent_id, contact_phone, commission_ratio
+      FROM agents 
+      WHERE agent_username = ? AND password_hash = ?
+    `).bind(username, password).first() as any
+    
+    if (!agent) {
+      return c.json({ success: false, error: '账号或密码错误' }, 401)
+    }
+    
+    if (agent.status !== 1) {
+      return c.json({ success: false, error: '账号已被停用' }, 403)
+    }
+    
+    // 生成token（简化版，生产环境应使用JWT）
+    const token = `agent_${agent.id}_${Date.now()}`
+    
+    return c.json({
+      success: true,
+      data: {
+        token,
+        user: {
+          id: agent.id,
+          username: agent.agent_username,
+          real_name: agent.nickname,
+          role: agent.level, // 'shareholder' 或 'agent'
+          level: agent.level,
+          phone: agent.contact_phone
+        }
+      }
+    })
+  } catch (error) {
+    return c.json({ success: false, error: String(error) }, 500)
+  }
+})
+
+// 验证token
+app.get('/api/agent/verify', async (c) => {
+  const db = c.env.DB
+  const auth = c.req.header('Authorization')
+  
+  if (!auth || !auth.startsWith('Bearer ')) {
+    return c.json({ success: false, error: '未登录' }, 401)
+  }
+  
+  const token = auth.substring(7)
+  const agentId = token.split('_')[1]
+  
+  try {
+    const agent = await db.prepare(`
+      SELECT id, agent_username, nickname, level, status FROM agents WHERE id = ?
+    `).bind(agentId).first() as any
+    
+    if (!agent || agent.status !== 1) {
+      return c.json({ success: false, error: '登录已失效' }, 401)
+    }
+    
+    return c.json({
+      success: true,
+      data: {
+        user: {
+          id: agent.id,
+          username: agent.agent_username,
+          real_name: agent.nickname,
+          role: agent.level,
+          level: agent.level
+        }
+      }
+    })
+  } catch (error) {
+    return c.json({ success: false, error: String(error) }, 500)
+  }
+})
+
+// 获取当前代理ID（从token解析）
+function getAgentIdFromToken(c: any): number | null {
+  const auth = c.req.header('Authorization')
+  if (!auth || !auth.startsWith('Bearer ')) return null
+  
+  const token = auth.substring(7)
+  const agentId = parseInt(token.split('_')[1])
+  return isNaN(agentId) ? null : agentId
+}
+
+// 获取仪表盘统计
+app.get('/api/agent/dashboard/stats', async (c) => {
+  const db = c.env.DB
+  const agentId = getAgentIdFromToken(c)
+  
+  if (!agentId) {
+    return c.json({ success: false, error: '未登录' }, 401)
+  }
+  
+  try {
+    // 模拟数据（实际应从数据库查询）
+    const stats = {
+      todayRevenue: 25680.50,
+      revenueChange: 12.5,
+      teamCount: 255,
+      agentCount: 15,
+      monthCommission: 18500.00,
+      settledCommission: 12000.00,
+      activePlayers: 180,
+      newPlayers: 8,
+      revenueChart: {
+        labels: ['周一', '周二', '周三', '周四', '周五', '周六', '周日'],
+        values: [12000, 15000, 13000, 18000, 16000, 20000, 22000]
+      },
+      teamChart: {
+        labels: ['直属代理', '二级代理', '三级代理', '玩家'],
+        values: [10, 25, 40, 180]
+      }
+    }
+    
+    return c.json({ success: true, data: stats })
+  } catch (error) {
+    return c.json({ success: false, error: String(error) }, 500)
+  }
+})
+
+// 获取下级代理列表
+app.get('/api/agent/subordinates', async (c) => {
+  const db = c.env.DB
+  const agentId = getAgentIdFromToken(c)
+  
+  if (!agentId) {
+    return c.json({ success: false, error: '未登录' }, 401)
+  }
+  
+  const page = parseInt(c.req.query('page') || '1')
+  const pageSize = 20
+  const offset = (page - 1) * pageSize
+  
+  const search = c.req.query('search') || ''
+  const level = c.req.query('level') || ''
+  const status = c.req.query('status') || ''
+  
+  try {
+    let whereConditions = ['parent_agent_id = ?']
+    let params: any[] = [agentId]
+    
+    if (search) {
+      whereConditions.push('(agent_username LIKE ? OR nickname LIKE ? OR contact_phone LIKE ?)')
+      const searchPattern = `%${search}%`
+      params.push(searchPattern, searchPattern, searchPattern)
+    }
+    
+    if (level) {
+      whereConditions.push('level = ?')
+      params.push(level)
+    }
+    
+    if (status !== '') {
+      whereConditions.push('status = ?')
+      params.push(status)
+    }
+    
+    const whereClause = whereConditions.join(' AND ')
+    
+    // 查询总数
+    const countResult = await db.prepare(`
+      SELECT COUNT(*) as total FROM agents WHERE ${whereClause}
+    `).bind(...params).first() as any
+    
+    // 查询列表
+    const list = await db.prepare(`
+      SELECT 
+        a.id, 
+        a.agent_username as username, 
+        a.nickname as real_name, 
+        a.contact_phone as phone, 
+        a.level, 
+        a.status, 
+        a.created_at,
+        (SELECT COUNT(*) FROM agents WHERE parent_agent_id = a.id) as subordinate_count,
+        0 as player_count,
+        0 as month_performance
+      FROM agents a
+      WHERE ${whereClause}
+      ORDER BY a.created_at DESC
+      LIMIT ? OFFSET ?
+    `).bind(...params, pageSize, offset).all()
+    
+    return c.json({
+      success: true,
+      data: {
+        list: list.results,
+        pagination: {
+          current: page,
+          pageSize,
+          total: countResult.total
+        }
+      }
+    })
+  } catch (error) {
+    return c.json({ success: false, error: String(error) }, 500)
+  }
+})
+
+// 新增下级代理
+app.post('/api/agent/subordinates', async (c) => {
+  const db = c.env.DB
+  const agentId = getAgentIdFromToken(c)
+  
+  if (!agentId) {
+    return c.json({ success: false, error: '未登录' }, 401)
+  }
+  
+  const { username, password, real_name, phone, commission_rate } = await c.req.json()
+  
+  // 验证输入
+  if (!username || !password || !real_name || !phone) {
+    return c.json({ success: false, error: '请填写完整信息' }, 400)
+  }
+  
+  try {
+    // 检查账号是否已存在
+    const existing = await db.prepare('SELECT id FROM agents WHERE agent_username = ?').bind(username).first()
+    if (existing) {
+      return c.json({ success: false, error: '账号已存在' }, 400)
+    }
+    
+    // 插入新代理
+    const result = await db.prepare(`
+      INSERT INTO agents (agent_username, password_hash, nickname, contact_phone, level, parent_agent_id, commission_ratio, status)
+      VALUES (?, ?, ?, ?, 'agent', ?, ?, 1)
+    `).bind(username, password, real_name, phone, agentId, commission_rate || 0).run()
+    
+    return c.json({
+      success: true,
+      data: { id: result.meta.last_row_id },
+      message: '新增成功'
+    })
+  } catch (error) {
+    return c.json({ success: false, error: String(error) }, 500)
+  }
+})
+
 export default app

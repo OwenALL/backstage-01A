@@ -2479,11 +2479,21 @@ async function renderFinance(container) {
             </div>
             <div>
               <label class="text-gray-400 text-xs block mb-1.5">密码值</label>
-              <input type="password" id="pwd1-value" placeholder="6-20位数字或字母" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm focus:border-primary focus:outline-none">
+              <div class="relative">
+                <input type="password" id="pwd1-value" placeholder="6-20位数字或字母" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 pr-10 text-sm focus:border-primary focus:outline-none">
+                <button type="button" onclick="togglePasswordVisibility('pwd1-value')" class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white" title="显示/隐藏密码">
+                  <i class="fas fa-eye" id="pwd1-value-icon"></i>
+                </button>
+              </div>
             </div>
-            <button onclick="saveFinancePassword(1)" class="w-full bg-blue-600 hover:bg-blue-700 py-2 rounded font-medium transition-colors">
-              <i class="fas fa-save mr-2"></i>保存密码
-            </button>
+            <div class="flex gap-2">
+              <button onclick="saveFinancePassword(1)" class="flex-1 bg-blue-600 hover:bg-blue-700 py-2 rounded font-medium transition-colors">
+                <i class="fas fa-save mr-2"></i>保存密码
+              </button>
+              <button onclick="resetFinancePassword(1)" class="px-4 bg-gray-600 hover:bg-gray-500 py-2 rounded font-medium transition-colors" title="重置密码">
+                <i class="fas fa-redo"></i>
+              </button>
+            </div>
           </div>
         </div>
         
@@ -2503,11 +2513,21 @@ async function renderFinance(container) {
             </div>
             <div>
               <label class="text-gray-400 text-xs block mb-1.5">密码值</label>
-              <input type="password" id="pwd2-value" placeholder="6-20位数字或字母" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm focus:border-primary focus:outline-none">
+              <div class="relative">
+                <input type="password" id="pwd2-value" placeholder="6-20位数字或字母" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 pr-10 text-sm focus:border-primary focus:outline-none">
+                <button type="button" onclick="togglePasswordVisibility('pwd2-value')" class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white" title="显示/隐藏密码">
+                  <i class="fas fa-eye" id="pwd2-value-icon"></i>
+                </button>
+              </div>
             </div>
-            <button onclick="saveFinancePassword(2)" class="w-full bg-green-600 hover:bg-green-700 py-2 rounded font-medium transition-colors">
-              <i class="fas fa-save mr-2"></i>保存密码
-            </button>
+            <div class="flex gap-2">
+              <button onclick="saveFinancePassword(2)" class="flex-1 bg-green-600 hover:bg-green-700 py-2 rounded font-medium transition-colors">
+                <i class="fas fa-save mr-2"></i>保存密码
+              </button>
+              <button onclick="resetFinancePassword(2)" class="px-4 bg-gray-600 hover:bg-gray-500 py-2 rounded font-medium transition-colors" title="重置密码">
+                <i class="fas fa-redo"></i>
+              </button>
+            </div>
           </div>
         </div>
         
@@ -2527,11 +2547,21 @@ async function renderFinance(container) {
             </div>
             <div>
               <label class="text-gray-400 text-xs block mb-1.5">密码值</label>
-              <input type="password" id="pwd3-value" placeholder="6-20位数字或字母" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm focus:border-primary focus:outline-none">
+              <div class="relative">
+                <input type="password" id="pwd3-value" placeholder="6-20位数字或字母" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 pr-10 text-sm focus:border-primary focus:outline-none">
+                <button type="button" onclick="togglePasswordVisibility('pwd3-value')" class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white" title="显示/隐藏密码">
+                  <i class="fas fa-eye" id="pwd3-value-icon"></i>
+                </button>
+              </div>
             </div>
-            <button onclick="saveFinancePassword(3)" class="w-full bg-purple-600 hover:bg-purple-700 py-2 rounded font-medium transition-colors">
-              <i class="fas fa-save mr-2"></i>保存密码
-            </button>
+            <div class="flex gap-2">
+              <button onclick="saveFinancePassword(3)" class="flex-1 bg-purple-600 hover:bg-purple-700 py-2 rounded font-medium transition-colors">
+                <i class="fas fa-save mr-2"></i>保存密码
+              </button>
+              <button onclick="resetFinancePassword(3)" class="px-4 bg-gray-600 hover:bg-gray-500 py-2 rounded font-medium transition-colors" title="重置密码">
+                <i class="fas fa-redo"></i>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -15390,6 +15420,61 @@ async function saveFinancePassword(slot) {
   } catch (error) {
     console.error('Save finance password error:', error);
     showToast('设置失败: ' + error.message, 'error');
+  }
+}
+
+// 切换密码可见性
+function togglePasswordVisibility(inputId) {
+  const input = document.getElementById(inputId);
+  const icon = document.getElementById(`${inputId}-icon`);
+  
+  if (!input || !icon) return;
+  
+  if (input.type === 'password') {
+    input.type = 'text';
+    icon.classList.remove('fa-eye');
+    icon.classList.add('fa-eye-slash');
+  } else {
+    input.type = 'password';
+    icon.classList.remove('fa-eye-slash');
+    icon.classList.add('fa-eye');
+  }
+}
+
+// 重置财务密码（超级管理员功能）
+async function resetFinancePassword(slot) {
+  // 检查权限（可以在这里添加更严格的权限检查）
+  if (!currentUser || currentUser.role !== 'super_admin') {
+    showToast('只有超级管理员可以重置财务密码', 'error');
+    return;
+  }
+  
+  if (!confirm(`确认要重置财务密码 #${slot} 吗？\n重置后该密码将被清空，需要重新设置。`)) {
+    return;
+  }
+  
+  try {
+    const result = await api(`/api/finance-password/reset/${slot}`, {
+      method: 'POST'
+    });
+    
+    if (result.success) {
+      showToast(`财务密码 #${slot} 已重置`, 'success');
+      
+      // 清空输入框
+      const nameEl = document.getElementById(`pwd${slot}-name`);
+      const valueEl = document.getElementById(`pwd${slot}-value`);
+      if (nameEl) nameEl.value = '';
+      if (valueEl) valueEl.value = '';
+      
+      // 重新加载配置
+      loadFinancePasswordConfig();
+    } else {
+      showToast(result.error || '重置失败', 'error');
+    }
+  } catch (error) {
+    console.error('Reset finance password error:', error);
+    showToast('重置失败: ' + error.message, 'error');
   }
 }
 

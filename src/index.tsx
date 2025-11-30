@@ -7137,6 +7137,39 @@ app.post('/api/finance-password/verify', async (c) => {
   }
 })
 
+// 重置财务密码（超级管理员功能）
+app.post('/api/finance-password/reset/:slot', async (c) => {
+  try {
+    const slot = parseInt(c.req.param('slot'))
+    
+    if (!slot || slot < 1 || slot > 3) {
+      return c.json({ success: false, error: '无效的密码槽位' }, 400)
+    }
+    
+    // TODO: 在生产环境中，这里应该验证用户是否为超级管理员
+    // const token = c.req.header('Authorization')?.replace('Bearer ', '')
+    // const user = await verifyToken(token)
+    // if (user.role !== 'super_admin') {
+    //   return c.json({ success: false, error: '权限不足' }, 403)
+    // }
+    
+    // 重置密码配置
+    const pwdIndex = financePasswordConfig.passwords.findIndex(p => p.slot === slot)
+    if (pwdIndex !== -1) {
+      financePasswordConfig.passwords[pwdIndex] = {
+        slot,
+        name: '',
+        password: '',
+        is_set: false
+      }
+    }
+    
+    return c.json({ success: true, message: '财务密码已重置' })
+  } catch (error) {
+    return c.json({ success: false, error: String(error) }, 500)
+  }
+})
+
 // ========================================
 // 前端页面
 // ========================================
@@ -7360,7 +7393,7 @@ app.get('*', (c) => {
     </main>
   </div>
 
-  <script src="/static/app.js?v=20251130-29"></script>
+  <script src="/static/app.js?v=20251130-30"></script>
 </body>
 </html>
   `)

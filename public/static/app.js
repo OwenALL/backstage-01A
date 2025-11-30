@@ -840,17 +840,17 @@ async function renderAgents(container) {
   };
   
   container.innerHTML = `
-    <div class="space-y-6">
-      <!-- 代理层级树 -->
-      <div class="bg-gray-800 rounded-xl p-5">
+    <div class="flex gap-6 h-[calc(100vh-12rem)]">
+      <!-- 左侧：代理层级树 -->
+      <div class="w-1/3 bg-gray-800 rounded-xl p-5 flex flex-col">
         <h3 class="text-lg font-semibold mb-4"><i class="fas fa-sitemap text-primary mr-2"></i>代理层级结构</h3>
-        <div class="space-y-2 max-h-96 overflow-y-auto">
+        <div class="flex-1 space-y-2 overflow-y-auto pr-2">
           ${renderTree(tree)}
         </div>
       </div>
       
-      <!-- 代理列表 -->
-      <div class="bg-gray-800 rounded-xl p-5">
+      <!-- 右侧：代理列表 -->
+      <div class="flex-1 bg-gray-800 rounded-xl p-5 flex flex-col">
         <div class="flex justify-between items-center mb-4">
           <h3 class="text-lg font-semibold"><i class="fas fa-users text-primary mr-2"></i>代理列表</h3>
           <button onclick="showAddAgentModal()" class="bg-primary hover:bg-blue-700 px-4 py-2 rounded-lg text-sm">
@@ -950,7 +950,7 @@ async function renderAgents(container) {
         </div>
         
         <!-- 数据表格 -->
-        <div class="overflow-x-auto">
+        <div class="flex-1 overflow-auto">
           <table id="agents-table" class="w-full data-table">
             <thead class="bg-gray-700">
               <tr>

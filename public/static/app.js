@@ -1366,6 +1366,8 @@ async function renderFinance(container) {
       <button id="tab-manual" onclick="switchFinanceTab('manual')" class="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600">人工存取款</button>
       <button id="tab-payment" onclick="switchFinanceTab('payment')" class="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600">收款方式设置</button>
       <button id="tab-flow" onclick="switchFinanceTab('flow')" class="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600">账户明细</button>
+      <button id="tab-transfers" onclick="switchFinanceTab('transfers')" class="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600"><i class="fas fa-exchange-alt mr-1"></i>转账记录</button>
+      <button id="tab-transfer-fee" onclick="switchFinanceTab('transfer-fee')" class="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600"><i class="fas fa-cog mr-1"></i>转账手续费</button>
     </div>
     
     <!-- 提款审核 -->
@@ -1608,6 +1610,128 @@ async function renderFinance(container) {
         </tbody>
       </table>
     </div>
+    
+    <!-- 转账记录 -->
+    <div id="finance-transfers" class="hidden">
+      <div class="bg-gray-800 rounded-xl p-4 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
+          <div>
+            <label class="text-gray-400 text-xs block mb-1">开始日期</label>
+            <input type="date" id="transfer-start-date" value="${dayjs().subtract(7, 'day').format('YYYY-MM-DD')}" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm">
+          </div>
+          <div>
+            <label class="text-gray-400 text-xs block mb-1">结束日期</label>
+            <input type="date" id="transfer-end-date" value="${dayjs().format('YYYY-MM-DD')}" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm">
+          </div>
+          <div>
+            <label class="text-gray-400 text-xs block mb-1">订单号</label>
+            <input type="text" id="transfer-order-no" placeholder="输入订单号" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm">
+          </div>
+          <div>
+            <label class="text-gray-400 text-xs block mb-1">转出会员</label>
+            <input type="text" id="transfer-from-player" placeholder="账号/ID" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm">
+          </div>
+          <div>
+            <label class="text-gray-400 text-xs block mb-1">转入会员</label>
+            <input type="text" id="transfer-to-player" placeholder="账号/ID" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm">
+          </div>
+        </div>
+        <div class="flex flex-wrap gap-4 items-end">
+          <div>
+            <label class="text-gray-400 text-xs block mb-1">状态</label>
+            <select id="transfer-status" class="bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm">
+              <option value="">全部状态</option>
+              <option value="pending">待处理</option>
+              <option value="completed">已完成</option>
+              <option value="failed">已失败</option>
+              <option value="cancelled">已取消</option>
+            </select>
+          </div>
+          <button onclick="loadTransfers()" class="bg-primary hover:bg-blue-700 px-4 py-2 rounded text-sm">
+            <i class="fas fa-search mr-2"></i>查询
+          </button>
+          <button onclick="exportTransfers()" class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded text-sm">
+            <i class="fas fa-download mr-2"></i>导出
+          </button>
+        </div>
+      </div>
+      
+      <!-- 统计卡片 -->
+      <div id="transfer-stats" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-gray-800 rounded-xl p-4">
+          <p class="text-gray-400 text-xs mb-1">总转账笔数</p>
+          <p class="text-xl font-bold text-white" id="stat-transfer-count">-</p>
+        </div>
+        <div class="bg-gray-800 rounded-xl p-4">
+          <p class="text-gray-400 text-xs mb-1">总转账金额</p>
+          <p class="text-xl font-bold text-cyan-400" id="stat-transfer-amount">-</p>
+        </div>
+        <div class="bg-gray-800 rounded-xl p-4">
+          <p class="text-gray-400 text-xs mb-1">总手续费</p>
+          <p class="text-xl font-bold text-orange-400" id="stat-transfer-fee">-</p>
+        </div>
+        <div class="bg-gray-800 rounded-xl p-4">
+          <p class="text-gray-400 text-xs mb-1">实际到账</p>
+          <p class="text-xl font-bold text-green-400" id="stat-transfer-actual">-</p>
+        </div>
+      </div>
+      
+      <!-- 转账记录表格 -->
+      <div class="bg-gray-800 rounded-xl overflow-hidden">
+        <table class="w-full data-table">
+          <thead class="bg-gray-700">
+            <tr>
+              <th class="text-left p-3 text-xs">订单号</th>
+              <th class="text-left p-3 text-xs">转出会员</th>
+              <th class="text-left p-3 text-xs">转入会员</th>
+              <th class="text-right p-3 text-xs">转账金额</th>
+              <th class="text-right p-3 text-xs">手续费</th>
+              <th class="text-right p-3 text-xs">实际到账</th>
+              <th class="text-center p-3 text-xs">状态</th>
+              <th class="text-left p-3 text-xs">创建时间</th>
+              <th class="text-center p-3 text-xs">操作</th>
+            </tr>
+          </thead>
+          <tbody id="transfers-tbody">
+            <tr><td colspan="9" class="p-8 text-center text-gray-400">点击查询按钮加载数据</td></tr>
+          </tbody>
+        </table>
+        <div id="transfer-pagination" class="p-4 border-t border-gray-700"></div>
+      </div>
+    </div>
+    
+    <!-- 转账手续费设置 -->
+    <div id="finance-transfer-fee" class="hidden">
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="text-lg font-semibold">
+          <i class="fas fa-cog text-primary mr-2"></i>转账手续费配置
+        </h3>
+        <button onclick="showAddFeeConfigForm()" class="bg-primary hover:bg-blue-700 px-4 py-2 rounded text-sm">
+          <i class="fas fa-plus mr-2"></i>新增配置
+        </button>
+      </div>
+      
+      <div class="bg-gray-800 rounded-xl overflow-hidden">
+        <table class="w-full data-table">
+          <thead class="bg-gray-700">
+            <tr>
+              <th class="text-left p-3 text-xs">配置名称</th>
+              <th class="text-center p-3 text-xs">VIP等级</th>
+              <th class="text-center p-3 text-xs">金额范围</th>
+              <th class="text-center p-3 text-xs">费率类型</th>
+              <th class="text-center p-3 text-xs">费率值</th>
+              <th class="text-center p-3 text-xs">最低费用</th>
+              <th class="text-center p-3 text-xs">最高费用</th>
+              <th class="text-center p-3 text-xs">状态/优先级</th>
+              <th class="text-center p-3 text-xs">操作</th>
+            </tr>
+          </thead>
+          <tbody id="fee-config-table-body">
+            <tr><td colspan="9" class="p-8 text-center text-gray-400">加载中...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   `;
 }
 
@@ -1641,6 +1765,412 @@ function switchFinanceTab(tab) {
   document.getElementById(`finance-${tab}`).classList.remove('hidden');
   document.getElementById(`tab-${tab}`).classList.remove('bg-gray-700');
   document.getElementById(`tab-${tab}`).classList.add('bg-primary');
+  
+  // 加载对应数据
+  if (tab === 'transfer-fee') {
+    loadTransferFeeConfigs();
+  }
+}
+
+// ========================================
+// 转账手续费配置管理函数（财务控端）
+// ========================================
+
+// 加载手续费配置列表
+async function loadTransferFeeConfigs() {
+  try {
+    const tbody = document.getElementById('fee-config-table-body');
+    if (tbody) {
+      tbody.innerHTML = '<tr><td colspan="9" class="text-center p-8"><i class="fas fa-spinner fa-spin mr-2"></i>加载中...</td></tr>';
+    }
+    
+    const response = await fetch('/api/transfer-fee-configs', {
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+    });
+
+    if (!response.ok) throw new Error('Failed to fetch fee configs');
+    const data = await response.json();
+
+    if (data.configs.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="9" class="text-center text-gray-400 p-8">暂无配置</td></tr>';
+      return;
+    }
+
+    const feeTypeTexts = {
+      percentage: '百分比',
+      fixed: '固定金额'
+    };
+
+    tbody.innerHTML = data.configs.map(c => `
+      <tr class="border-t border-gray-700 hover:bg-gray-750">
+        <td class="p-3 text-sm font-semibold">${escapeHtml(c.name)}</td>
+        <td class="p-3 text-sm">
+          ${c.vip_level === -1 ? '<span class="text-blue-400">全部等级</span>' : `<span class="text-purple-400">VIP ${c.vip_level}</span>`}
+        </td>
+        <td class="p-3 text-sm text-gray-300">
+          ¥${c.min_amount.toFixed(2)} ~ ${c.max_amount ? '¥' + c.max_amount.toFixed(2) : '<span class="text-gray-500">无上限</span>'}
+        </td>
+        <td class="p-3 text-sm text-gray-400">${feeTypeTexts[c.fee_type]}</td>
+        <td class="p-3 text-sm font-semibold text-orange-400">
+          ${c.fee_type === 'percentage' ? c.fee_rate + '%' : '¥' + c.fee_amount.toFixed(2)}
+        </td>
+        <td class="p-3 text-sm text-gray-300">¥${c.min_fee.toFixed(2)}</td>
+        <td class="p-3 text-sm text-gray-300">${c.max_fee ? '¥' + c.max_fee.toFixed(2) : '<span class="text-gray-500">无上限</span>'}</td>
+        <td class="p-3 text-sm">
+          <span class="px-2 py-1 rounded-full text-xs font-semibold ${c.is_active ? 'bg-green-900 text-green-300' : 'bg-gray-700 text-gray-400'}">
+            ${c.is_active ? '启用' : '停用'}
+          </span>
+          <span class="ml-2 text-xs text-gray-500">优先级: ${c.priority}</span>
+        </td>
+        <td class="p-3 text-sm">
+          <button onclick="editFeeConfig(${c.id})" class="text-blue-400 hover:text-blue-300 mr-2" title="编辑">
+            <i class="fas fa-edit"></i>
+          </button>
+          <button onclick="toggleFeeConfig(${c.id}, ${c.is_active ? 0 : 1})" class="text-${c.is_active ? 'gray' : 'green'}-400 hover:text-${c.is_active ? 'gray' : 'green'}-300 mr-2" title="${c.is_active ? '停用' : '启用'}">
+            <i class="fas fa-${c.is_active ? 'toggle-off' : 'toggle-on'}"></i>
+          </button>
+          <button onclick="deleteFeeConfig(${c.id})" class="text-red-400 hover:text-red-300" title="删除">
+            <i class="fas fa-trash"></i>
+          </button>
+        </td>
+      </tr>
+    `).join('');
+
+  } catch (error) {
+    showToast('加载手续费配置失败: ' + error.message, 'error');
+    const tbody = document.getElementById('fee-config-table-body');
+    if (tbody) {
+      tbody.innerHTML = '<tr><td colspan="9" class="text-center text-red-400 p-8">加载失败</td></tr>';
+    }
+  }
+}
+
+// 显示新增手续费配置表单
+function showAddFeeConfigForm() {
+  const modalHtml = `
+    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onclick="this.remove()">
+      <div class="bg-gray-800 rounded-lg p-6 max-w-3xl w-full mx-4 max-h-screen overflow-y-auto" onclick="event.stopPropagation()">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-xl font-bold text-white">
+            <i class="fas fa-plus-circle mr-2 text-blue-400"></i>新增手续费配置
+          </h3>
+          <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-white">
+            <i class="fas fa-times text-xl"></i>
+          </button>
+        </div>
+        <form id="fee-config-form" class="space-y-4">
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-semibold mb-1 text-gray-300">配置名称 *</label>
+              <input type="text" name="name" required class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded focus:outline-none focus:border-blue-500" placeholder="例如: VIP5专属优惠">
+            </div>
+            <div>
+              <label class="block text-sm font-semibold mb-1 text-gray-300">会员等级</label>
+              <select name="vip_level" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded focus:outline-none focus:border-blue-500">
+                <option value="-1">全部等级</option>
+                ${[...Array(11)].map((_, i) => `<option value="${i}">VIP ${i}</option>`).join('')}
+              </select>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-semibold mb-1 text-gray-300">最小金额 *</label>
+              <input type="number" name="min_amount" step="0.01" min="0" required class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded focus:outline-none focus:border-blue-500" placeholder="0.00">
+            </div>
+            <div>
+              <label class="block text-sm font-semibold mb-1 text-gray-300">最大金额</label>
+              <input type="number" name="max_amount" step="0.01" min="0" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded focus:outline-none focus:border-blue-500" placeholder="留空表示无上限">
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-semibold mb-1 text-gray-300">手续费类型 *</label>
+              <select name="fee_type" onchange="toggleFeeInputs(this.value)" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded focus:outline-none focus:border-blue-500">
+                <option value="percentage">百分比</option>
+                <option value="fixed">固定金额</option>
+              </select>
+            </div>
+            <div id="fee-rate-div">
+              <label class="block text-sm font-semibold mb-1 text-gray-300">费率 (%) *</label>
+              <input type="number" name="fee_rate" step="0.01" min="0" max="100" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded focus:outline-none focus:border-blue-500" placeholder="例如: 0.5">
+            </div>
+            <div id="fee-amount-div" style="display:none;">
+              <label class="block text-sm font-semibold mb-1 text-gray-300">手续费金额 *</label>
+              <input type="number" name="fee_amount" step="0.01" min="0" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded focus:outline-none focus:border-blue-500" placeholder="0.00">
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-semibold mb-1 text-gray-300">最低手续费 *</label>
+              <input type="number" name="min_fee" step="0.01" min="0" required class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded focus:outline-none focus:border-blue-500" placeholder="0.00">
+            </div>
+            <div>
+              <label class="block text-sm font-semibold mb-1 text-gray-300">最高手续费</label>
+              <input type="number" name="max_fee" step="0.01" min="0" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded focus:outline-none focus:border-blue-500" placeholder="留空表示无上限">
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-semibold mb-1 text-gray-300">优先级 *</label>
+              <input type="number" name="priority" min="0" value="0" required class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded focus:outline-none focus:border-blue-500">
+              <div class="text-xs text-gray-500 mt-1">数值越大优先级越高</div>
+            </div>
+            <div>
+              <label class="block text-sm font-semibold mb-1 text-gray-300">状态</label>
+              <select name="is_active" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded focus:outline-none focus:border-blue-500">
+                <option value="1">启用</option>
+                <option value="0">停用</option>
+              </select>
+            </div>
+          </div>
+          <div class="flex justify-end space-x-2 pt-4 border-t border-gray-700">
+            <button type="button" onclick="this.closest('.fixed').remove()" class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700">
+              <i class="fas fa-times mr-1"></i>取消
+            </button>
+            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+              <i class="fas fa-save mr-1"></i>保存
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  `;
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+  document.getElementById('fee-config-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const data = {};
+    
+    for (let [key, value] of formData.entries()) {
+      if (value === '') continue;
+      if (['min_amount', 'max_amount', 'fee_rate', 'fee_amount', 'min_fee', 'max_fee'].includes(key)) {
+        data[key] = parseFloat(value);
+      } else if (['vip_level', 'priority', 'is_active'].includes(key)) {
+        data[key] = parseInt(value);
+      } else {
+        data[key] = value;
+      }
+    }
+
+    try {
+      const response = await fetch('/api/transfer-fee-configs', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(data)
+      });
+
+      if (!response.ok) throw new Error('Failed to create config');
+      
+      showToast('手续费配置创建成功', 'success');
+      document.querySelector('.fixed').remove();
+      loadTransferFeeConfigs();
+
+    } catch (error) {
+      showToast('创建失败: ' + error.message, 'error');
+    }
+  });
+}
+
+// 切换费率输入框显示
+function toggleFeeInputs(feeType) {
+  document.getElementById('fee-rate-div').style.display = feeType === 'percentage' ? 'block' : 'none';
+  document.getElementById('fee-amount-div').style.display = feeType === 'fixed' ? 'block' : 'none';
+}
+
+// 编辑手续费配置
+async function editFeeConfig(configId) {
+  try {
+    const response = await fetch('/api/transfer-fee-configs', {
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+    });
+    const data = await response.json();
+    const config = data.configs.find(c => c.id === configId);
+
+    if (!config) {
+      showToast('未找到配置', 'error');
+      return;
+    }
+
+    const modalHtml = `
+      <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onclick="this.remove()">
+        <div class="bg-gray-800 rounded-lg p-6 max-w-3xl w-full mx-4 max-h-screen overflow-y-auto" onclick="event.stopPropagation()">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold text-white">
+              <i class="fas fa-edit mr-2 text-blue-400"></i>编辑手续费配置
+            </h3>
+            <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-white">
+              <i class="fas fa-times text-xl"></i>
+            </button>
+          </div>
+          <form id="fee-config-edit-form" class="space-y-4">
+            <input type="hidden" name="id" value="${config.id}">
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-semibold mb-1 text-gray-300">配置名称 *</label>
+                <input type="text" name="name" value="${escapeHtml(config.name)}" required class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded focus:outline-none focus:border-blue-500">
+              </div>
+              <div>
+                <label class="block text-sm font-semibold mb-1 text-gray-300">会员等级</label>
+                <select name="vip_level" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded focus:outline-none focus:border-blue-500">
+                  <option value="-1" ${config.vip_level === -1 ? 'selected' : ''}>全部等级</option>
+                  ${[...Array(11)].map((_, i) => `<option value="${i}" ${config.vip_level === i ? 'selected' : ''}>VIP ${i}</option>`).join('')}
+                </select>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-semibold mb-1 text-gray-300">最小金额 *</label>
+                <input type="number" name="min_amount" step="0.01" value="${config.min_amount}" required class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded focus:outline-none focus:border-blue-500">
+              </div>
+              <div>
+                <label class="block text-sm font-semibold mb-1 text-gray-300">最大金额</label>
+                <input type="number" name="max_amount" step="0.01" value="${config.max_amount || ''}" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded focus:outline-none focus:border-blue-500">
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-semibold mb-1 text-gray-300">手续费类型 *</label>
+                <select name="fee_type" onchange="toggleFeeInputs(this.value)" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded focus:outline-none focus:border-blue-500">
+                  <option value="percentage" ${config.fee_type === 'percentage' ? 'selected' : ''}>百分比</option>
+                  <option value="fixed" ${config.fee_type === 'fixed' ? 'selected' : ''}>固定金额</option>
+                </select>
+              </div>
+              <div id="fee-rate-div" style="display:${config.fee_type === 'percentage' ? 'block' : 'none'}">
+                <label class="block text-sm font-semibold mb-1 text-gray-300">费率 (%) *</label>
+                <input type="number" name="fee_rate" step="0.01" value="${config.fee_rate || ''}" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded focus:outline-none focus:border-blue-500">
+              </div>
+              <div id="fee-amount-div" style="display:${config.fee_type === 'fixed' ? 'block' : 'none'}">
+                <label class="block text-sm font-semibold mb-1 text-gray-300">手续费金额 *</label>
+                <input type="number" name="fee_amount" step="0.01" value="${config.fee_amount || ''}" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded focus:outline-none focus:border-blue-500">
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-semibold mb-1 text-gray-300">最低手续费 *</label>
+                <input type="number" name="min_fee" step="0.01" value="${config.min_fee}" required class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded focus:outline-none focus:border-blue-500">
+              </div>
+              <div>
+                <label class="block text-sm font-semibold mb-1 text-gray-300">最高手续费</label>
+                <input type="number" name="max_fee" step="0.01" value="${config.max_fee || ''}" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded focus:outline-none focus:border-blue-500">
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-semibold mb-1 text-gray-300">优先级 *</label>
+                <input type="number" name="priority" value="${config.priority}" required class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded focus:outline-none focus:border-blue-500">
+              </div>
+              <div>
+                <label class="block text-sm font-semibold mb-1 text-gray-300">状态</label>
+                <select name="is_active" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded focus:outline-none focus:border-blue-500">
+                  <option value="1" ${config.is_active ? 'selected' : ''}>启用</option>
+                  <option value="0" ${!config.is_active ? 'selected' : ''}>停用</option>
+                </select>
+              </div>
+            </div>
+            <div class="flex justify-end space-x-2 pt-4 border-t border-gray-700">
+              <button type="button" onclick="this.closest('.fixed').remove()" class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700">
+                <i class="fas fa-times mr-1"></i>取消
+              </button>
+              <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                <i class="fas fa-save mr-1"></i>保存
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+    document.getElementById('fee-config-edit-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const data = {};
+      
+      for (let [key, value] of formData.entries()) {
+        if (value === '' && key !== 'max_amount' && key !== 'max_fee') continue;
+        if (['min_amount', 'max_amount', 'fee_rate', 'fee_amount', 'min_fee', 'max_fee'].includes(key)) {
+          data[key] = value ? parseFloat(value) : null;
+        } else if (['id', 'vip_level', 'priority', 'is_active'].includes(key)) {
+          data[key] = parseInt(value);
+        } else {
+          data[key] = value;
+        }
+      }
+
+      try {
+        const response = await fetch('/api/transfer-fee-configs', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          body: JSON.stringify(data)
+        });
+
+        if (!response.ok) throw new Error('Failed to update config');
+        
+        showToast('手续费配置更新成功', 'success');
+        document.querySelector('.fixed').remove();
+        loadTransferFeeConfigs();
+
+      } catch (error) {
+        showToast('更新失败: ' + error.message, 'error');
+      }
+    });
+
+  } catch (error) {
+    showToast('加载配置失败: ' + error.message, 'error');
+  }
+}
+
+// 切换手续费配置状态
+async function toggleFeeConfig(configId, isActive) {
+  try {
+    const response = await fetch('/api/transfer-fee-configs', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      },
+      body: JSON.stringify({ id: configId, is_active: isActive })
+    });
+
+    if (!response.ok) throw new Error('Failed to toggle config');
+    
+    showToast(isActive ? '配置已启用' : '配置已停用', 'success');
+    loadTransferFeeConfigs();
+
+  } catch (error) {
+    showToast('操作失败: ' + error.message, 'error');
+  }
+}
+
+// 删除手续费配置
+async function deleteFeeConfig(configId) {
+  if (!confirm('确定要删除这个手续费配置吗?')) return;
+
+  try {
+    const response = await fetch('/api/transfer-fee-configs', {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      },
+      body: JSON.stringify({ id: configId })
+    });
+
+    if (!response.ok) throw new Error('Failed to delete config');
+    
+    showToast('配置删除成功', 'success');
+    loadTransferFeeConfigs();
+
+  } catch (error) {
+    showToast('删除失败: ' + error.message, 'error');
+  }
 }
 
 // 人工存款
@@ -6266,105 +6796,95 @@ async function renderReports(container) {
     
     <!-- 8. 转账记录 -->
     <div id="report-transfers" class="hidden bg-gray-800 rounded-xl overflow-hidden">
-      <!-- 筛选区域 -->
+      <!-- 查询条件区域 -->
       <div class="p-4 border-b border-gray-700">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <!-- 左侧筛选条件 -->
-          <div class="flex flex-wrap gap-3 items-end">
-            <div>
-              <label class="text-gray-400 text-xs block mb-1">日期范围</label>
-              <div class="flex items-center space-x-2">
-                <input type="datetime-local" id="account-start-date" value="${dayjs().subtract(7, 'day').format('YYYY-MM-DDTHH:mm')}" class="bg-gray-700 border border-gray-600 rounded px-2 py-1.5 text-sm w-44">
-                <span class="text-gray-500">-</span>
-                <input type="datetime-local" id="account-end-date" value="${dayjs().format('YYYY-MM-DDTHH:mm')}" class="bg-gray-700 border border-gray-600 rounded px-2 py-1.5 text-sm w-44">
-              </div>
-            </div>
-            <div>
-              <label class="text-gray-400 text-xs block mb-1">用户编号</label>
-              <input type="text" id="account-user-id" placeholder="请输入用户账号" class="bg-gray-700 border border-gray-600 rounded px-3 py-1.5 text-sm w-32">
-            </div>
-            <div>
-              <label class="text-gray-400 text-xs block mb-1">订单号</label>
-              <input type="text" id="account-order-no" placeholder="请输入订单号" class="bg-gray-700 border border-gray-600 rounded px-3 py-1.5 text-sm w-32">
-            </div>
-            <div>
-              <label class="text-gray-400 text-xs block mb-1">类型</label>
-              <select id="account-type" class="bg-gray-700 border border-gray-600 rounded px-3 py-1.5 text-sm min-w-28">
-                <option value="">全部类型</option>
-                <option value="bet">投注</option>
-                <option value="win">派彩</option>
-                <option value="deposit">存款</option>
-                <option value="withdraw">取款</option>
-                <option value="bonus">红利</option>
-                <option value="rebate">返水</option>
-                <option value="transfer_in">转入</option>
-                <option value="transfer_out">转出</option>
-                <option value="adjustment">调整</option>
-              </select>
-            </div>
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-3 mb-3">
+          <div>
+            <label class="text-gray-400 text-xs block mb-1">开始日期</label>
+            <input type="date" id="search-transfer-start" value="${dayjs().subtract(7, 'day').format('YYYY-MM-DD')}" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm">
           </div>
-          <!-- 右侧操作按钮 -->
-          <div class="flex flex-wrap gap-3 items-end justify-end">
-            <button onclick="loadAccountDetails()" class="bg-primary hover:bg-blue-700 px-5 py-1.5 rounded text-sm font-medium">
-              <i class="fas fa-search mr-1"></i>查询
-            </button>
-            <button onclick="exportReport('account')" class="bg-green-600 hover:bg-green-700 px-4 py-1.5 rounded text-sm">
-              <i class="fas fa-file-excel mr-1"></i>EXCEL
-            </button>
-            <button onclick="copyAccountData()" class="bg-cyan-600 hover:bg-cyan-700 px-4 py-1.5 rounded text-sm">
-              <i class="fas fa-copy mr-1"></i>复制数据
-            </button>
+          <div>
+            <label class="text-gray-400 text-xs block mb-1">结束日期</label>
+            <input type="date" id="search-transfer-end" value="${dayjs().format('YYYY-MM-DD')}" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm">
+          </div>
+          <div>
+            <label class="text-gray-400 text-xs block mb-1">转账订单号</label>
+            <input type="text" id="search-transfer-id" placeholder="输入订单号" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm">
+          </div>
+          <div>
+            <label class="text-gray-400 text-xs block mb-1">转出会员</label>
+            <input type="text" id="search-from-player" placeholder="账号/ID" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm">
+          </div>
+          <div>
+            <label class="text-gray-400 text-xs block mb-1">转入会员</label>
+            <input type="text" id="search-to-player" placeholder="账号/ID" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm">
+          </div>
+        </div>
+        <div class="flex flex-wrap gap-3 items-end">
+          <div>
+            <label class="text-gray-400 text-xs block mb-1">转账状态</label>
+            <select id="search-transfer-status" class="bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm">
+              <option value="">全部状态</option>
+              <option value="pending">待处理</option>
+              <option value="approved">已批准</option>
+              <option value="rejected">已拒绝</option>
+              <option value="completed">已完成</option>
+              <option value="cancelled">已取消</option>
+            </select>
+          </div>
+          <button onclick="loadTransferRecords()" class="bg-primary hover:bg-blue-700 px-5 py-2 rounded text-sm">
+            <i class="fas fa-search mr-2"></i>查询
+          </button>
+          <button onclick="exportReport('transfers')" class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded text-sm">
+            <i class="fas fa-file-excel mr-1"></i>导出
+          </button>
+        </div>
+      </div>
+      
+      <!-- 统计卡片 -->
+      <div class="p-4 border-b border-gray-700">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="bg-gray-700 rounded-lg p-3">
+            <p class="text-gray-400 text-xs mb-1">总转账笔数</p>
+            <p class="text-xl font-bold text-white" id="transfer-total-count">0</p>
+          </div>
+          <div class="bg-gray-700 rounded-lg p-3">
+            <p class="text-gray-400 text-xs mb-1">总转账金额</p>
+            <p class="text-xl font-bold text-blue-400">¥<span id="transfer-total-amount">0.00</span></p>
+          </div>
+          <div class="bg-gray-700 rounded-lg p-3">
+            <p class="text-gray-400 text-xs mb-1">总手续费</p>
+            <p class="text-xl font-bold text-orange-400">¥<span id="transfer-total-fee">0.00</span></p>
+          </div>
+          <div class="bg-gray-700 rounded-lg p-3">
+            <p class="text-gray-400 text-xs mb-1">实际到账总额</p>
+            <p class="text-xl font-bold text-green-400">¥<span id="transfer-actual-amount">0.00</span></p>
           </div>
         </div>
       </div>
       
-      <!-- 账户明细表格 -->
+      <!-- 转账记录表格 -->
       <div class="overflow-x-auto">
         <table class="w-full text-sm">
           <thead>
             <tr class="bg-gray-700 text-gray-300">
-              <th class="text-left p-3 font-medium w-16">类型</th>
               <th class="text-left p-3 font-medium">订单号</th>
-              <th class="text-center p-3 font-medium border-l border-gray-600" colspan="4">游戏内容</th>
-              <th class="text-right p-3 font-medium border-l border-gray-600">变化金额</th>
-              <th class="text-right p-3 font-medium">变化前金额</th>
-              <th class="text-right p-3 font-medium">变化后金额</th>
-              <th class="text-center p-3 font-medium border-l border-gray-600">创建时间</th>
-            </tr>
-            <tr class="bg-gray-750 text-xs text-gray-500 border-b border-gray-600">
-              <th class="p-2"></th>
-              <th class="p-2"></th>
-              <th class="text-center p-2 border-l border-gray-600">游戏</th>
-              <th class="text-center p-2">期号</th>
-              <th class="text-center p-2">类型</th>
-              <th class="text-center p-2">投注点</th>
-              <th class="p-2 border-l border-gray-600"></th>
-              <th class="p-2"></th>
-              <th class="p-2"></th>
-              <th class="p-2 border-l border-gray-600"></th>
+              <th class="text-left p-3 font-medium">转出会员</th>
+              <th class="text-center p-3 font-medium w-12"></th>
+              <th class="text-left p-3 font-medium">转入会员</th>
+              <th class="text-right p-3 font-medium">转账金额</th>
+              <th class="text-right p-3 font-medium">手续费</th>
+              <th class="text-right p-3 font-medium">实际到账</th>
+              <th class="text-center p-3 font-medium">状态</th>
+              <th class="text-center p-3 font-medium">创建时间</th>
+              <th class="text-center p-3 font-medium">操作</th>
             </tr>
           </thead>
-          <tbody id="account-tbody" class="divide-y divide-gray-700">
-            <tr><td colspan="10" class="p-8 text-center text-gray-500">暂无数据</td></tr>
+          <tbody id="transfer-table-body" class="divide-y divide-gray-700">
+            <tr><td colspan="10" class="p-8 text-center text-gray-400">暂无数据</td></tr>
           </tbody>
         </table>
       </div>
-      
-      <!-- 分页 -->
-      <div class="p-4 border-t border-gray-700 flex justify-between items-center bg-gray-750">
-        <div class="flex items-center space-x-4">
-          <select id="account-page-size" onchange="loadAccountDetails()" class="bg-gray-700 border border-gray-600 rounded px-2 py-1 text-sm">
-            <option value="50">50条/页</option>
-            <option value="100">100条/页</option>
-            <option value="200">200条/页</option>
-          </select>
-          <span class="text-gray-400">跳至</span>
-          <input type="number" id="account-page" value="1" min="1" class="bg-gray-700 border border-gray-600 rounded px-2 py-1 text-sm w-14 text-center">
-          <span class="text-gray-400">页</span>
-        </div>
-        <div class="text-sm text-gray-400">
-          共 <span id="account-total" class="text-white font-medium">0</span> 条记录
-        </div>
       </div>
     </div>
     
@@ -7956,92 +8476,246 @@ function copySettleData() {
 }
 
 // 加载转账记录
+// ========================================
+// 转账记录管理函数（报表中心 - 会员间转账）
+// ========================================
+
+// 加载转账记录列表
 async function loadTransferRecords() {
-  const startDate = document.getElementById('transfer-start-date')?.value || '';
-  const endDate = document.getElementById('transfer-end-date')?.value || '';
-  const fromPlayer = document.getElementById('transfer-from')?.value || '';
-  const toPlayer = document.getElementById('transfer-to')?.value || '';
-  const minAmount = document.getElementById('transfer-min')?.value || '';
-  const maxAmount = document.getElementById('transfer-max')?.value || '';
-  
-  const tbody = document.getElementById('transfer-tbody');
-  if (tbody) {
-    tbody.innerHTML = '<tr><td colspan="8" class="p-8 text-center text-gray-400"><i class="fas fa-spinner fa-spin mr-2"></i>加载中...</td></tr>';
-  }
-  
+  const transferId = document.getElementById('search-transfer-id')?.value || '';
+  const fromPlayer = document.getElementById('search-from-player')?.value || '';
+  const toPlayer = document.getElementById('search-to-player')?.value || '';
+  const status = document.getElementById('search-transfer-status')?.value || '';
+  const startDate = document.getElementById('search-transfer-start')?.value || '';
+  const endDate = document.getElementById('search-transfer-end')?.value || '';
+
   try {
-    let url = '/api/reports/transfers?limit=100';
-    if (startDate) url += `&start_date=${startDate}`;
-    if (endDate) url += `&end_date=${endDate}`;
-    if (fromPlayer) url += `&from_player=${encodeURIComponent(fromPlayer)}`;
-    if (toPlayer) url += `&to_player=${encodeURIComponent(toPlayer)}`;
-    if (minAmount) url += `&min_amount=${minAmount}`;
-    if (maxAmount) url += `&max_amount=${maxAmount}`;
-    
-    const result = await api(url);
-    
-    if (result.success) {
-      const transfers = result.data || [];
-      const stats = result.stats || {};
-      
-      // 更新统计数据
-      document.getElementById('stat-count').textContent = formatNumber(stats.total_count || 0);
-      document.getElementById('stat-amount').textContent = formatCurrency(stats.total_amount || 0);
-      document.getElementById('stat-fee').textContent = formatCurrency(stats.total_fee || 0);
-      document.getElementById('stat-senders').textContent = formatNumber(stats.unique_senders || 0);
-      document.getElementById('stat-receivers').textContent = formatNumber(stats.unique_receivers || 0);
-      
-      if (transfers.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" class="p-8 text-center text-gray-400">暂无转账记录</td></tr>';
-        return;
-      }
-      
-      tbody.innerHTML = transfers.map(t => `
-        <tr class="border-t border-gray-700 hover:bg-gray-750">
-          <td class="p-4 text-sm text-gray-400">${formatDateTime(t.created_at)}</td>
-          <td class="p-4">
-            <span class="font-mono text-xs bg-gray-700 px-2 py-1 rounded">${escapeHtml(t.order_no)}</span>
-          </td>
-          <td class="p-4">
-            <div class="flex items-center">
-              <div class="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center mr-2">
-                <i class="fas fa-arrow-up text-white text-xs"></i>
-              </div>
-              <div>
-                <p class="font-medium">${escapeHtml(t.from_username || '-')}</p>
-                <p class="text-xs text-gray-400">${escapeHtml(t.from_nickname || '')} ${t.from_vip_level ? `<span class="text-purple-400">VIP${t.from_vip_level}</span>` : ''}</p>
-              </div>
-            </div>
-          </td>
-          <td class="p-4 text-center">
-            <i class="fas fa-long-arrow-alt-right text-2xl text-primary"></i>
-          </td>
-          <td class="p-4">
-            <div class="flex items-center">
-              <div class="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center mr-2">
-                <i class="fas fa-arrow-down text-white text-xs"></i>
-              </div>
-              <div>
-                <p class="font-medium">${escapeHtml(t.to_username || '-')}</p>
-                <p class="text-xs text-gray-400">${escapeHtml(t.to_nickname || '')} ${t.to_vip_level ? `<span class="text-purple-400">VIP${t.to_vip_level}</span>` : ''}</p>
-              </div>
-            </div>
-          </td>
-          <td class="p-4 text-right">
-            <span class="font-mono font-bold text-green-400">${formatCurrency(t.amount)}</span>
-          </td>
-          <td class="p-4 text-right">
-            <span class="font-mono text-yellow-400">${t.fee > 0 ? formatCurrency(t.fee) : '-'}</span>
-          </td>
-          <td class="p-4 text-sm text-gray-400 max-w-xs truncate" title="${escapeHtml(t.remark || '')}">${escapeHtml(t.remark || '-')}</td>
-        </tr>
-      `).join('');
-    } else {
-      tbody.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-red-400">加载失败: ${result.error}</td></tr>`;
+    const tbody = document.getElementById('transfer-table-body');
+    if (tbody) {
+      tbody.innerHTML = '<tr><td colspan="10" class="text-center p-8"><i class="fas fa-spinner fa-spin mr-2"></i>加载中...</td></tr>';
     }
+    
+    const params = new URLSearchParams({
+      ...(transferId && { transfer_id: transferId }),
+      ...(fromPlayer && { from_player: fromPlayer }),
+      ...(toPlayer && { to_player: toPlayer }),
+      ...(status && { status: status }),
+      ...(startDate && { start_date: startDate }),
+      ...(endDate && { end_date: endDate }),
+      limit: '100'
+    });
+
+    const response = await fetch(`/api/transfers?${params}`, {
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+    });
+
+    if (!response.ok) throw new Error('Failed to fetch transfers');
+    const data = await response.json();
+
+    // 更新统计数据
+    if (document.getElementById('transfer-total-count')) {
+      document.getElementById('transfer-total-count').textContent = data.stats.total_count;
+    }
+    if (document.getElementById('transfer-total-amount')) {
+      document.getElementById('transfer-total-amount').textContent = data.stats.total_amount.toFixed(2);
+    }
+    if (document.getElementById('transfer-total-fee')) {
+      document.getElementById('transfer-total-fee').textContent = data.stats.total_fee.toFixed(2);
+    }
+    if (document.getElementById('transfer-actual-amount')) {
+      document.getElementById('transfer-actual-amount').textContent = data.stats.actual_amount.toFixed(2);
+    }
+
+    // 渲染表格
+    if (data.transfers.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="10" class="text-center text-gray-400 p-8">暂无数据</td></tr>';
+      return;
+    }
+
+    const statusColors = {
+      pending: 'yellow',
+      approved: 'green',
+      rejected: 'red',
+      completed: 'blue',
+      cancelled: 'gray'
+    };
+
+    const statusTexts = {
+      pending: '待处理',
+      approved: '已批准',
+      rejected: '已拒绝',
+      completed: '已完成',
+      cancelled: '已取消'
+    };
+
+    tbody.innerHTML = data.transfers.map(t => `
+      <tr class="border-t border-gray-700 hover:bg-gray-750">
+        <td class="p-3 text-sm">
+          <span class="font-mono text-xs bg-gray-700 px-2 py-1 rounded">${escapeHtml(t.transfer_id)}</span>
+        </td>
+        <td class="p-3 text-sm">
+          <div class="flex items-center">
+            <div class="w-7 h-7 bg-red-600 rounded-full flex items-center justify-center mr-2">
+              <i class="fas fa-arrow-up text-white text-xs"></i>
+            </div>
+            <div>
+              <p class="font-medium">${escapeHtml(t.from_player_username || '-')}</p>
+              <p class="text-xs text-gray-400">ID: ${t.from_player_id}</p>
+            </div>
+          </div>
+        </td>
+        <td class="p-3 text-center">
+          <i class="fas fa-long-arrow-alt-right text-xl text-primary"></i>
+        </td>
+        <td class="p-3 text-sm">
+          <div class="flex items-center">
+            <div class="w-7 h-7 bg-green-600 rounded-full flex items-center justify-center mr-2">
+              <i class="fas fa-arrow-down text-white text-xs"></i>
+            </div>
+            <div>
+              <p class="font-medium">${escapeHtml(t.to_player_username || '-')}</p>
+              <p class="text-xs text-gray-400">ID: ${t.to_player_id}</p>
+            </div>
+          </div>
+        </td>
+        <td class="p-3 text-right">
+          <span class="font-mono font-bold text-blue-400">¥${t.amount.toFixed(2)}</span>
+        </td>
+        <td class="p-3 text-right">
+          <span class="font-mono text-orange-400">${t.fee > 0 ? '¥' + t.fee.toFixed(2) : '-'}</span>
+        </td>
+        <td class="p-3 text-right">
+          <span class="font-mono font-bold text-green-400">¥${t.actual_amount.toFixed(2)}</span>
+        </td>
+        <td class="p-3 text-sm">
+          <span class="px-2 py-1 rounded-full text-xs font-semibold bg-${statusColors[t.status]}-900 text-${statusColors[t.status]}-300">
+            ${statusTexts[t.status]}
+          </span>
+        </td>
+        <td class="p-3 text-sm text-gray-400">${formatDateTime(t.created_at)}</td>
+        <td class="p-3 text-sm">
+          <button onclick="showTransferDetail('${t.transfer_id}')" class="text-blue-400 hover:text-blue-300 mr-2">
+            <i class="fas fa-eye"></i>
+          </button>
+          ${t.status === 'pending' ? `
+            <button onclick="reviewTransfer('${t.transfer_id}', 'approved')" class="text-green-400 hover:text-green-300 mr-2" title="通过">
+              <i class="fas fa-check"></i>
+            </button>
+            <button onclick="reviewTransfer('${t.transfer_id}', 'rejected')" class="text-red-400 hover:text-red-300" title="拒绝">
+              <i class="fas fa-times"></i>
+            </button>
+          ` : ''}
+        </td>
+      </tr>
+    `).join('');
+
   } catch (error) {
-    console.error('Load transfer records error:', error);
-    tbody.innerHTML = '<tr><td colspan="8" class="p-8 text-center text-red-400">加载失败，请稍后重试</td></tr>';
+    showToast('加载转账记录失败: ' + error.message, 'error');
+    const tbody = document.getElementById('transfer-table-body');
+    if (tbody) {
+      tbody.innerHTML = '<tr><td colspan="10" class="text-center text-red-400 p-8">加载失败</td></tr>';
+    }
+  }
+}
+
+// 显示转账详情
+async function showTransferDetail(transferId) {
+  try {
+    const response = await fetch(`/api/transfers?transfer_id=${transferId}`, {
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+    });
+
+    if (!response.ok) throw new Error('Failed to fetch transfer detail');
+    const data = await response.json();
+    const transfer = data.transfers[0];
+
+    if (!transfer) {
+      showToast('未找到转账记录', 'error');
+      return;
+    }
+
+    const statusTexts = {
+      pending: '待处理',
+      approved: '已批准',
+      rejected: '已拒绝',
+      completed: '已完成',
+      cancelled: '已取消'
+    };
+
+    const modalHtml = `
+      <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onclick="this.remove()">
+        <div class="bg-gray-800 rounded-lg p-6 max-w-2xl w-full mx-4" onclick="event.stopPropagation()">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold text-white">
+              <i class="fas fa-exchange-alt mr-2 text-blue-400"></i>转账详情
+            </h3>
+            <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-white">
+              <i class="fas fa-times text-xl"></i>
+            </button>
+          </div>
+          <div class="space-y-3 text-gray-300">
+            <div class="grid grid-cols-2 gap-4">
+              <div><span class="font-semibold text-gray-400">转账订单号:</span> <span class="font-mono">${transfer.transfer_id}</span></div>
+              <div><span class="font-semibold text-gray-400">状态:</span> <span class="text-blue-400 font-bold">${statusTexts[transfer.status]}</span></div>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div><span class="font-semibold text-gray-400">转出会员:</span> ${transfer.from_player_username} (ID: ${transfer.from_player_id})</div>
+              <div><span class="font-semibold text-gray-400">转入会员:</span> ${transfer.to_player_username} (ID: ${transfer.to_player_id})</div>
+            </div>
+            <div class="grid grid-cols-3 gap-4">
+              <div><span class="font-semibold text-gray-400">转账金额:</span> <span class="text-blue-400 font-bold">¥${transfer.amount.toFixed(2)}</span></div>
+              <div><span class="font-semibold text-gray-400">手续费:</span> <span class="text-orange-400">¥${transfer.fee.toFixed(2)}</span></div>
+              <div><span class="font-semibold text-gray-400">实际到账:</span> <span class="text-green-400 font-bold">¥${transfer.actual_amount.toFixed(2)}</span></div>
+            </div>
+            ${transfer.remark ? `<div><span class="font-semibold text-gray-400">备注:</span> ${escapeHtml(transfer.remark)}</div>` : ''}
+            <div class="grid grid-cols-2 gap-4">
+              <div><span class="font-semibold text-gray-400">创建时间:</span> ${formatDateTime(transfer.created_at)}</div>
+              ${transfer.reviewed_at ? `<div><span class="font-semibold text-gray-400">审核时间:</span> ${formatDateTime(transfer.reviewed_at)}</div>` : ''}
+            </div>
+            ${transfer.reviewed_by ? `<div><span class="font-semibold text-gray-400">审核人:</span> ${transfer.reviewed_by}</div>` : ''}
+          </div>
+          <div class="mt-6 text-right">
+            <button onclick="this.closest('.fixed').remove()" class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700">
+              <i class="fas fa-times mr-1"></i>关闭
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+  } catch (error) {
+    showToast('加载详情失败: ' + error.message, 'error');
+  }
+}
+
+// 审核转账
+async function reviewTransfer(transferId, action) {
+  const remark = action === 'rejected' ? prompt('请输入拒绝原因:') : null;
+  if (action === 'rejected' && !remark) return;
+
+  try {
+    const response = await fetch('/api/transfers', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      },
+      body: JSON.stringify({
+        transfer_id: transferId,
+        action: action,
+        ...(remark && { remark: remark })
+      })
+    });
+
+    if (!response.ok) throw new Error('Review failed');
+    const result = await response.json();
+
+    showToast(action === 'approved' ? '转账已通过审核' : '转账已拒绝', 'success');
+    loadTransferRecords();
+
+  } catch (error) {
+    showToast('审核失败: ' + error.message, 'error');
   }
 }
 

@@ -1101,10 +1101,15 @@ app.get('/api/transfer-fee-configs', async (c) => {
   
   try {
     const configs = await db.prepare(`
-      SELECT * FROM transfer_fee_configs ORDER BY priority DESC, id ASC
+      SELECT 
+        id, name, vip_level, min_amount, max_amount, fee_type, 
+        fee_value as fee_rate, fee_value as fee_amount,
+        min_fee, max_fee, priority, is_enabled as is_active, 
+        created_at, updated_at
+      FROM transfer_fee_configs ORDER BY priority DESC, id ASC
     `).all()
     
-    return c.json({ success: true, data: configs.results })
+    return c.json({ success: true, configs: configs.results })
   } catch (error) {
     return c.json({ success: false, error: String(error) }, 500)
   }
@@ -1116,6 +1121,9 @@ app.post('/api/transfer-fee-configs', async (c) => {
   const data = await c.req.json()
   
   try {
+    // 前端发送fee_rate或fee_amount，后端统一存储为fee_value
+    const feeValue = data.fee_type === 'percentage' ? (data.fee_rate || 0) : (data.fee_amount || 0)
+    
     const result = await db.prepare(`
       INSERT INTO transfer_fee_configs 
       (name, vip_level, min_amount, max_amount, fee_type, fee_value, min_fee, max_fee, priority, is_enabled)
@@ -1124,13 +1132,13 @@ app.post('/api/transfer-fee-configs', async (c) => {
       data.name,
       data.vip_level ?? -1,
       data.min_amount || 0,
-      data.max_amount || 0,
+      data.max_amount || null,
       data.fee_type,
-      data.fee_value,
+      feeValue,
       data.min_fee || 0,
-      data.max_fee || 0,
+      data.max_fee || null,
       data.priority || 0,
-      data.is_enabled ? 1 : 0
+      data.is_active ? 1 : 0
     ).run()
     
     return c.json({ success: true, id: result.meta.last_row_id })
@@ -1140,12 +1148,14 @@ app.post('/api/transfer-fee-configs', async (c) => {
 })
 
 // 更新转账手续费配置
-app.put('/api/transfer-fee-configs/:id', async (c) => {
+app.put('/api/transfer-fee-configs', async (c) => {
   const db = c.env.DB
-  const id = c.req.param('id')
   const data = await c.req.json()
   
   try {
+    // 前端发送fee_rate或fee_amount，后端统一存储为fee_value
+    const feeValue = data.fee_type === 'percentage' ? (data.fee_rate || 0) : (data.fee_amount || 0)
+    
     await db.prepare(`
       UPDATE transfer_fee_configs 
       SET name = ?, vip_level = ?, min_amount = ?, max_amount = ?, 
@@ -1156,14 +1166,14 @@ app.put('/api/transfer-fee-configs/:id', async (c) => {
       data.name,
       data.vip_level ?? -1,
       data.min_amount || 0,
-      data.max_amount || 0,
+      data.max_amount || null,
       data.fee_type,
-      data.fee_value,
+      feeValue,
       data.min_fee || 0,
-      data.max_fee || 0,
+      data.max_fee || null,
       data.priority || 0,
-      data.is_enabled ? 1 : 0,
-      id
+      data.is_active !== undefined ? (data.is_active ? 1 : 0) : 1,
+      data.id
     ).run()
     
     return c.json({ success: true })
@@ -1173,12 +1183,12 @@ app.put('/api/transfer-fee-configs/:id', async (c) => {
 })
 
 // 删除转账手续费配置
-app.delete('/api/transfer-fee-configs/:id', async (c) => {
+app.delete('/api/transfer-fee-configs', async (c) => {
   const db = c.env.DB
-  const id = c.req.param('id')
+  const data = await c.req.json()
   
   try {
-    await db.prepare("DELETE FROM transfer_fee_configs WHERE id = ?").bind(id).run()
+    await db.prepare("DELETE FROM transfer_fee_configs WHERE id = ?").bind(data.id).run()
     return c.json({ success: true })
   } catch (error) {
     return c.json({ success: false, error: String(error) }, 500)

@@ -30,10 +30,10 @@ const escapeJs = (str) => {
 
 // 工具函数
 const formatCurrency = (num) => {
-  return '¥ ' + Number(num || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return '$ ' + Number(num || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 };
 
-const formatNumber = (num) => Number(num || 0).toLocaleString('zh-CN');
+const formatNumber = (num) => Number(num || 0).toLocaleString('en-US');
 
 const formatDateTime = (dt) => {
   if (!dt) return '-';
@@ -1860,14 +1860,14 @@ async function loadTransferFeeConfigs() {
           ${c.vip_level === -1 ? '<span class="text-blue-400">全部等级</span>' : `<span class="text-purple-400">VIP ${c.vip_level}</span>`}
         </td>
         <td class="p-3 text-sm text-gray-300">
-          ¥${c.min_amount.toFixed(2)} ~ ${c.max_amount ? '¥' + c.max_amount.toFixed(2) : '<span class="text-gray-500">无上限</span>'}
+          $${c.min_amount.toFixed(2)} ~ ${c.max_amount ? '$' + c.max_amount.toFixed(2) : '<span class="text-gray-500">无上限</span>'}
         </td>
         <td class="p-3 text-sm text-gray-400">${feeTypeTexts[c.fee_type]}</td>
         <td class="p-3 text-sm font-semibold text-orange-400">
-          ${c.fee_type === 'percentage' ? c.fee_rate + '%' : '¥' + c.fee_amount.toFixed(2)}
+          ${c.fee_type === 'percentage' ? c.fee_rate + '%' : '$' + c.fee_amount.toFixed(2)}
         </td>
-        <td class="p-3 text-sm text-gray-300">¥${c.min_fee.toFixed(2)}</td>
-        <td class="p-3 text-sm text-gray-300">${c.max_fee ? '¥' + c.max_fee.toFixed(2) : '<span class="text-gray-500">无上限</span>'}</td>
+        <td class="p-3 text-sm text-gray-300">$${c.min_fee.toFixed(2)}</td>
+        <td class="p-3 text-sm text-gray-300">${c.max_fee ? '$' + c.max_fee.toFixed(2) : '<span class="text-gray-500">无上限</span>'}</td>
         <td class="p-3 text-sm">
           <span class="px-2 py-1 rounded-full text-xs font-semibold ${c.is_active ? 'bg-green-900 text-green-300' : 'bg-gray-700 text-gray-400'}">
             ${c.is_active ? '启用' : '停用'}
@@ -2238,7 +2238,7 @@ async function submitManualDeposit(e) {
     operator_name: currentUser?.nickname || currentUser?.username
   };
   
-  if (!confirm(`确定为玩家ID ${data.player_id} 存入 ¥${data.amount}？`)) return;
+  if (!confirm(`确定为玩家ID ${data.player_id} 存入 $${data.amount}？`)) return;
   
   const result = await api('/api/manual-deposit', {
     method: 'POST',
@@ -2246,7 +2246,7 @@ async function submitManualDeposit(e) {
   });
   
   if (result.success) {
-    alert(`存款成功！\n订单号: ${result.data.order_no}\n新余额: ¥${result.data.new_balance}`);
+    alert(`存款成功！\n订单号: ${result.data.order_no}\n新余额: $${result.data.new_balance}`);
     form.reset();
   } else {
     alert('存款失败: ' + result.error);
@@ -2267,7 +2267,7 @@ async function submitManualWithdraw(e) {
     operator_name: currentUser?.nickname || currentUser?.username
   };
   
-  if (!confirm(`确定为玩家ID ${data.player_id} 取出 ¥${data.amount}？`)) return;
+  if (!confirm(`确定为玩家ID ${data.player_id} 取出 $${data.amount}？`)) return;
   
   const result = await api('/api/manual-withdraw', {
     method: 'POST',
@@ -2275,7 +2275,7 @@ async function submitManualWithdraw(e) {
   });
   
   if (result.success) {
-    alert(`取款成功！\n订单号: ${result.data.order_no}\n新余额: ¥${result.data.new_balance}`);
+    alert(`取款成功！\n订单号: ${result.data.order_no}\n新余额: $${result.data.new_balance}`);
     form.reset();
   } else {
     alert('取款失败: ' + result.error);
@@ -2356,9 +2356,7 @@ function showAddPaymentMethod() {
               <div>
                 <label class="block text-gray-400 text-sm mb-2">币种</label>
                 <select name="currency" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2">
-                  <option value="CNY">CNY (人民币)</option>
-                  <option value="USDT">USDT</option>
-                  <option value="USD">USD</option>
+                  <option value="USD" selected>USD (美元)</option>
                 </select>
               </div>
             </div>
@@ -2466,7 +2464,7 @@ async function submitPaymentMethod(e) {
     method_code: form.method_code.value,
     method_name: form.method_name.value,
     method_type: form.method_type.value,
-    currency: form.currency?.value || 'CNY',
+    currency: form.currency?.value || 'USD',
     min_amount: parseFloat(form.min_amount.value),
     max_amount: parseFloat(form.max_amount.value),
     qr_code_url: form.qr_code_url?.value?.trim() || null,
@@ -2557,9 +2555,7 @@ async function editPaymentMethod(id) {
               <div>
                 <label class="block text-gray-400 text-sm mb-2">币种</label>
                 <select name="currency" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2">
-                  <option value="CNY" ${pm.currency === 'CNY' ? 'selected' : ''}>CNY (人民币)</option>
-                  <option value="USDT" ${pm.currency === 'USDT' ? 'selected' : ''}>USDT</option>
-                  <option value="USD" ${pm.currency === 'USD' ? 'selected' : ''}>USD</option>
+                  <option value="USD" selected>USD (美元)</option>
                 </select>
               </div>
             </div>
@@ -2628,7 +2624,7 @@ async function submitEditPaymentMethod(e, id) {
   const data = {
     method_name: form.method_name.value,
     method_type: form.method_type.value,
-    currency: form.currency?.value || 'CNY',
+    currency: form.currency?.value || 'USD',
     min_amount: parseFloat(form.min_amount.value),
     max_amount: parseFloat(form.max_amount.value),
     fee_rate: parseFloat(form.fee_rate.value) / 100,
@@ -3746,11 +3742,11 @@ async function renderCommission(container) {
           </div>
           <div class="bg-gray-700 rounded-lg p-3">
             <p class="text-gray-400 text-xs">今日派发红利</p>
-            <p id="trigger-stat-bonus" class="text-xl font-bold text-yellow-400">¥0</p>
+            <p id="trigger-stat-bonus" class="text-xl font-bold text-yellow-400">$0</p>
           </div>
           <div class="bg-gray-700 rounded-lg p-3">
             <p class="text-gray-400 text-xs">累计触发金额</p>
-            <p id="trigger-stat-total" class="text-xl font-bold text-purple-400">¥0</p>
+            <p id="trigger-stat-total" class="text-xl font-bold text-purple-400">$0</p>
           </div>
         </div>
         
@@ -7056,10 +7052,7 @@ async function renderReports(container) {
           <div>
             <label class="text-gray-300 text-xs block mb-1.5 font-medium">货币类型</label>
             <select id="settle-currency" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none transition-all">
-              <option value="">全部货币</option>
-              <option value="CNY" selected>人民币 CNY</option>
-              <option value="USD">美元 USD</option>
-              <option value="HKD">港币 HKD</option>
+              <option value="USD" selected>美元 USD</option>
             </select>
           </div>
           
@@ -7613,9 +7606,9 @@ async function loadGameRevenue() {
       // 清空统计卡片
       document.getElementById('game-total-types').textContent = '0';
       document.getElementById('game-total-bets').textContent = '0';
-      document.getElementById('game-total-amount').textContent = '¥ 0.00';
-      document.getElementById('game-total-payout').textContent = '¥ 0.00';
-      document.getElementById('game-total-revenue').textContent = '¥ 0.00';
+      document.getElementById('game-total-amount').textContent = '$ 0.00';
+      document.getElementById('game-total-payout').textContent = '$ 0.00';
+      document.getElementById('game-total-revenue').textContent = '$ 0.00';
     }
   } catch (error) {
     tbody.innerHTML = '<tr><td colspan="7" class="p-8 text-center text-red-400">加载失败，请稍后重试</td></tr>';
@@ -8251,23 +8244,23 @@ async function loadTransferFeeSettings() {
                 </div>
                 <div class="flex justify-between items-center p-2 bg-gray-800 rounded">
                   <span class="text-gray-400">${c.fee_type === 'percentage' ? '费率' : '金额'}</span>
-                  <span class="font-bold text-yellow-400">${c.fee_type === 'percentage' ? c.fee_rate + '%' : '¥' + formatCurrency(c.fee_amount || c.fee_value)}</span>
+                  <span class="font-bold text-yellow-400">${c.fee_type === 'percentage' ? c.fee_rate + '%' : '$' + formatCurrency(c.fee_amount || c.fee_value)}</span>
                 </div>
                 ${c.min_fee > 0 ? `
                 <div class="flex justify-between items-center p-2 bg-gray-800 rounded">
                   <span class="text-gray-400">最低手续费</span>
-                  <span>¥${formatCurrency(c.min_fee)}</span>
+                  <span>$${formatCurrency(c.min_fee)}</span>
                 </div>
                 ` : ''}
                 ${c.max_fee && c.max_fee > 0 ? `
                 <div class="flex justify-between items-center p-2 bg-gray-800 rounded">
                   <span class="text-gray-400">最高手续费</span>
-                  <span>¥${formatCurrency(c.max_fee)}</span>
+                  <span>$${formatCurrency(c.max_fee)}</span>
                 </div>
                 ` : ''}
                 <div class="flex justify-between items-center p-2 bg-gray-800 rounded">
                   <span class="text-gray-400">适用金额</span>
-                  <span class="text-xs">¥${formatCurrency(c.min_amount || 0)} - ${c.max_amount && c.max_amount > 0 ? '¥' + formatCurrency(c.max_amount) : '无上限'}</span>
+                  <span class="text-xs">$${formatCurrency(c.min_amount || 0)} - ${c.max_amount && c.max_amount > 0 ? '$' + formatCurrency(c.max_amount) : '无上限'}</span>
                 </div>
               </div>
             </div>
@@ -8957,7 +8950,7 @@ function resetSettleFilters() {
   document.getElementById('settle-end-date').value = dayjs().format('YYYY-MM-DDTHH:mm');
   document.getElementById('settle-game-type').value = '';
   document.getElementById('settle-business-mode').value = '';
-  document.getElementById('settle-currency').value = 'CNY';
+  document.getElementById('settle-currency').value = 'USD';
   document.getElementById('settle-user-type').value = 'real';
   loadSettleReport();
 }
@@ -9080,10 +9073,10 @@ async function loadTransferRecords() {
             </div>
           </td>
           <td class="p-3 text-right">
-            <span class="font-mono font-bold text-blue-400">¥${formatCurrency(t.amount)}</span>
+            <span class="font-mono font-bold text-blue-400">$${formatCurrency(t.amount)}</span>
           </td>
           <td class="p-3 text-right">
-            <span class="font-mono text-orange-400">${t.fee > 0 ? '¥' + formatCurrency(t.fee) : '-'}</span>
+            <span class="font-mono text-orange-400">${t.fee > 0 ? '$' + formatCurrency(t.fee) : '-'}</span>
           </td>
           <td class="p-3 text-sm">
             <span class="px-2 py-1 rounded text-xs bg-${statusColor}-900 text-${statusColor}-300">
@@ -9146,9 +9139,9 @@ async function showTransferDetail(transferId) {
               <div><span class="font-semibold text-gray-400">转入会员:</span> ${transfer.to_player_username} (ID: ${transfer.to_player_id})</div>
             </div>
             <div class="grid grid-cols-3 gap-4">
-              <div><span class="font-semibold text-gray-400">转账金额:</span> <span class="text-blue-400 font-bold">¥${transfer.amount.toFixed(2)}</span></div>
-              <div><span class="font-semibold text-gray-400">手续费:</span> <span class="text-orange-400">¥${transfer.fee.toFixed(2)}</span></div>
-              <div><span class="font-semibold text-gray-400">实际到账:</span> <span class="text-green-400 font-bold">¥${transfer.actual_amount.toFixed(2)}</span></div>
+              <div><span class="font-semibold text-gray-400">转账金额:</span> <span class="text-blue-400 font-bold">$${transfer.amount.toFixed(2)}</span></div>
+              <div><span class="font-semibold text-gray-400">手续费:</span> <span class="text-orange-400">$${transfer.fee.toFixed(2)}</span></div>
+              <div><span class="font-semibold text-gray-400">实际到账:</span> <span class="text-green-400 font-bold">$${transfer.actual_amount.toFixed(2)}</span></div>
             </div>
             ${transfer.remark ? `<div><span class="font-semibold text-gray-400">备注:</span> ${escapeHtml(transfer.remark)}</div>` : ''}
             <div class="grid grid-cols-2 gap-4">
@@ -13043,11 +13036,11 @@ function showAddVipLevelModal() {
           <h4 class="font-semibold text-lg mb-4 text-green-400"><i class="fas fa-chart-line mr-2"></i>升级条件</h4>
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-gray-400 text-sm mb-2">最低累计充值 (¥)</label>
+              <label class="block text-gray-400 text-sm mb-2">最低累计充值 ($)</label>
               <input type="number" name="min_deposit" min="0" step="0.01" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-primary" placeholder="0">
             </div>
             <div>
-              <label class="block text-gray-400 text-sm mb-2">最低累计投注 (¥)</label>
+              <label class="block text-gray-400 text-sm mb-2">最低累计投注 ($)</label>
               <input type="number" name="min_bet" min="0" step="0.01" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-primary" placeholder="0">
             </div>
           </div>
@@ -13058,11 +13051,11 @@ function showAddVipLevelModal() {
           <h4 class="font-semibold text-lg mb-4 text-yellow-400"><i class="fas fa-gift mr-2"></i>专属权益</h4>
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-gray-400 text-sm mb-2">升级红利 (¥)</label>
+              <label class="block text-gray-400 text-sm mb-2">升级红利 ($)</label>
               <input type="number" name="upgrade_bonus" min="0" step="0.01" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-primary" placeholder="0">
             </div>
             <div>
-              <label class="block text-gray-400 text-sm mb-2">每日签到红利 (¥)</label>
+              <label class="block text-gray-400 text-sm mb-2">每日签到红利 ($)</label>
               <input type="number" name="daily_bonus" min="0" step="0.01" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-primary" placeholder="0">
             </div>
             <div>
@@ -13070,7 +13063,7 @@ function showAddVipLevelModal() {
               <input type="number" name="rebate_rate" min="0" max="100" step="0.01" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-primary" placeholder="0">
             </div>
             <div>
-              <label class="block text-gray-400 text-sm mb-2">单次提款限额 (¥)</label>
+              <label class="block text-gray-400 text-sm mb-2">单次提款限额 ($)</label>
               <input type="number" name="withdraw_limit" min="0" step="0.01" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-primary" placeholder="留空表示无限制">
             </div>
           </div>

@@ -650,7 +650,7 @@ app.post('/api/agents', async (c) => {
     `).bind(
       body.agent_username, password_hash, body.nickname || null, body.level || 'agent',
       body.parent_agent_id || null, body.share_ratio || 0, body.commission_ratio || 0,
-      body.turnover_rate || 0, body.currency || 'CNY', body.default_commission_scheme_id || null,
+      body.turnover_rate || 0, body.currency || 'USD', body.default_commission_scheme_id || null,
       body.default_limit_group_id || null, body.contact_phone || null, body.contact_email || null, body.contact_telegram || null,
       invite_code, custom_domains, body.invite_link_status !== undefined ? body.invite_link_status : 1
     ).run()
@@ -1690,7 +1690,7 @@ app.post('/api/deposits/supplement', async (c) => {
       operator_name || 'admin', 
       depositId?.toString() || '',
       JSON.stringify({ player_id, amount, payment_method, remark, proof_images }),
-      `人工补单: 玩家${player.username} 金额¥${amount}`
+      `人工补单: 玩家${player.username} 金额$${amount}`
     ).run()
     
     return c.json({ 
@@ -1933,7 +1933,7 @@ app.post('/api/manual-deposit', async (c) => {
       VALUES (?, ?, 'finance', 'manual_deposit', 'player', ?, ?, ?, 2)
     `).bind(operator_id || 1, operator_name || 'admin', player_id, 
            JSON.stringify({ amount, balanceBefore, newBalance, payment_method, payment_channel }), 
-           `人工存款: ${player.username} +¥${amount}`).run()
+           `人工存款: ${player.username} +$${amount}`).run()
     
     return c.json({ success: true, data: { order_no: orderNo, new_balance: newBalance }, message: '人工存款成功' })
   } catch (error) {
@@ -1958,7 +1958,7 @@ app.post('/api/manual-withdraw', async (c) => {
     
     const balanceBefore = player.balance as number
     if (balanceBefore < amount) {
-      return c.json({ success: false, error: `余额不足，当前余额: ¥${balanceBefore}` }, 400)
+      return c.json({ success: false, error: `余额不足，当前余额: $${balanceBefore}` }, 400)
     }
     
     const newBalance = balanceBefore - amount
@@ -1992,7 +1992,7 @@ app.post('/api/manual-withdraw', async (c) => {
       VALUES (?, ?, 'finance', 'manual_withdraw', 'player', ?, ?, ?, 2)
     `).bind(operator_id || 1, operator_name || 'admin', player_id, 
            JSON.stringify({ amount, balanceBefore, newBalance, bank_name, bank_card_no }), 
-           `人工取款: ${player.username} -¥${amount}`).run()
+           `人工取款: ${player.username} -$${amount}`).run()
     
     return c.json({ success: true, data: { order_no: orderNo, new_balance: newBalance }, message: '人工取款成功' })
   } catch (error) {
@@ -2038,7 +2038,7 @@ app.post('/api/manual-adjust', async (c) => {
       INSERT INTO audit_logs (operator_id, operator_name, module, action, target_type, target_id, new_value, description, risk_level)
       VALUES (?, ?, 'finance', 'manual_adjust', 'player', ?, ?, ?, 2)
     `).bind(operator_id || 1, operator_name || 'admin', player_id, JSON.stringify({ amount, balanceBefore, newBalance }), 
-           `人工调整: ${player.username} ${amount > 0 ? '+' : ''}¥${amount}`).run()
+           `人工调整: ${player.username} ${amount > 0 ? '+' : ''}$${amount}`).run()
     
     return c.json({ success: true, data: { order_no: orderNo, new_balance: newBalance }, message: '人工调整成功' })
   } catch (error) {
@@ -2096,7 +2096,7 @@ app.post('/api/payment-methods', async (c) => {
       body.method_code, 
       body.method_name, 
       body.method_type || 'bank', 
-      body.currency || 'CNY',
+      body.currency || 'USD',
       body.min_amount || 100, 
       body.max_amount || 1000000, 
       body.fee_rate || 0, 
@@ -7147,7 +7147,7 @@ app.get('*', (c) => {
     </main>
   </div>
 
-  <script src="/static/app.js?v=20251130-23"></script>
+  <script src="/static/app.js?v=20251130-24"></script>
 </body>
 </html>
   `)

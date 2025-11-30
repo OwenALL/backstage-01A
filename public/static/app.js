@@ -12220,13 +12220,13 @@ function showPlayerDetailModal(player) {
         <div class="mt-6 pt-6 border-t border-gray-700">
           <h4 class="text-sm font-semibold text-gray-300 mb-3"><i class="fas fa-cogs mr-2 text-blue-400"></i>管理功能</h4>
           <div class="grid grid-cols-3 gap-2">
-            <button onclick="editPlayerProfile(${player.id})" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition-all">
+            <button onclick="editPlayer(${player.id})" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition-all">
               <i class="fas fa-edit mr-1"></i>编辑资料
             </button>
             <button onclick="setPlayerRiskLevel(${player.id})" class="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 rounded-lg text-sm font-medium transition-all">
               <i class="fas fa-exclamation-triangle mr-1"></i>风险等级
             </button>
-            <button onclick="adjustPlayerVipLevel(${player.id})" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-sm font-medium transition-all">
+            <button onclick="setPlayerVIPLevel(${player.id})" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-sm font-medium transition-all">
               <i class="fas fa-crown mr-1"></i>VIP等级
             </button>
             <button onclick="togglePlayerStatus(${player.id}, ${player.status})" class="px-4 py-2 ${player.status === 0 ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'} rounded-lg text-sm font-medium transition-all">
@@ -12238,7 +12238,7 @@ function showPlayerDetailModal(player) {
             <button onclick="sendPlayerMessage(${player.id})" class="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 rounded-lg text-sm font-medium transition-all">
               <i class="fas fa-envelope mr-1"></i>站内信
             </button>
-            <button onclick="addToBlacklist(${player.id}, '${escapeJs(player.username)}')" class="px-4 py-2 bg-black hover:bg-gray-900 rounded-lg text-sm font-medium transition-all">
+            <button onclick="blockPlayer(${player.id})" class="px-4 py-2 bg-black hover:bg-gray-900 rounded-lg text-sm font-medium transition-all">
               <i class="fas fa-ban mr-1"></i>拉黑名单
             </button>
             <button onclick="closePlayerDetailModal()" class="px-4 py-2 bg-gray-700 hover:bg-gray-800 rounded-lg text-sm font-medium transition-all">
@@ -12281,6 +12281,185 @@ function handlePlayerWithdraw(playerId) {
     if (withdrawTab) withdrawTab.click();
     // TODO: 自动填充玩家ID
   }, 300);
+}
+
+// 处理玩家存款
+async function handlePlayerDeposit(playerId) {
+  const modal = document.createElement('div');
+  modal.id = 'player-deposit-modal';
+  modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[60] p-4';
+  modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+  
+  modal.innerHTML = `
+    <div class="bg-gray-800 rounded-xl max-w-md w-full" onclick="event.stopPropagation()">
+      <div class="px-6 py-4 border-b border-gray-700 flex justify-between items-center">
+        <h3 class="text-xl font-bold">
+          <i class="fas fa-plus-circle text-green-400 mr-2"></i>玩家存款
+        </h3>
+        <button onclick="this.closest('#player-deposit-modal').remove()" class="text-gray-400 hover:text-white">
+          <i class="fas fa-times text-xl"></i>
+        </button>
+      </div>
+      
+      <form id="player-deposit-form" class="p-6 space-y-4">
+        <div>
+          <label class="block text-sm font-medium mb-2">存款金额</label>
+          <input type="number" name="amount" required min="1" step="0.01" placeholder="请输入存款金额..." 
+            class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary">
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium mb-2">支付方式</label>
+          <select name="payment_method" required 
+            class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary">
+            <option value="bank">银行卡转账</option>
+            <option value="alipay">支付宝</option>
+            <option value="wechat">微信支付</option>
+            <option value="usdt">USDT</option>
+            <option value="manual">人工存款</option>
+          </select>
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium mb-2">备注说明</label>
+          <textarea name="remark" rows="3" placeholder="选填..." 
+            class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary"></textarea>
+        </div>
+        
+        <div class="flex justify-end gap-3 pt-4 border-t border-gray-700">
+          <button type="button" onclick="this.closest('#player-deposit-modal').remove()" 
+            class="px-5 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg transition-colors">
+            <i class="fas fa-times mr-1.5"></i>取消
+          </button>
+          <button type="submit" 
+            class="px-5 py-2 bg-green-600 hover:bg-green-700 rounded-lg transition-colors">
+            <i class="fas fa-check mr-1.5"></i>确认存款
+          </button>
+        </div>
+      </form>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  
+  document.getElementById('player-deposit-form').onsubmit = async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const data = {
+      player_id: playerId,
+      amount: parseFloat(formData.get('amount')),
+      payment_method: formData.get('payment_method'),
+      remark: formData.get('remark')
+    };
+    
+    try {
+      const result = await api('/api/players/deposit', {
+        method: 'POST',
+        body: JSON.stringify(data)
+      });
+      
+      if (result.success) {
+        showToast('存款成功', 'success');
+        modal.remove();
+        closePlayerDetailModal();
+        viewPlayer(playerId);
+      } else {
+        showToast(result.error || '存款失败', 'error');
+      }
+    } catch (error) {
+      console.error('Deposit error:', error);
+      showToast('存款失败: ' + error.message, 'error');
+    }
+  };
+}
+
+// 处理玩家提款
+async function handlePlayerWithdraw(playerId) {
+  const modal = document.createElement('div');
+  modal.id = 'player-withdraw-modal';
+  modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[60] p-4';
+  modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+  
+  modal.innerHTML = `
+    <div class="bg-gray-800 rounded-xl max-w-md w-full" onclick="event.stopPropagation()">
+      <div class="px-6 py-4 border-b border-gray-700 flex justify-between items-center">
+        <h3 class="text-xl font-bold">
+          <i class="fas fa-minus-circle text-red-400 mr-2"></i>玩家提款
+        </h3>
+        <button onclick="this.closest('#player-withdraw-modal').remove()" class="text-gray-400 hover:text-white">
+          <i class="fas fa-times text-xl"></i>
+        </button>
+      </div>
+      
+      <form id="player-withdraw-form" class="p-6 space-y-4">
+        <div>
+          <label class="block text-sm font-medium mb-2">提款金额</label>
+          <input type="number" name="amount" required min="1" step="0.01" placeholder="请输入提款金额..." 
+            class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary">
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium mb-2">提款方式</label>
+          <select name="withdraw_method" required 
+            class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary">
+            <option value="bank">银行卡</option>
+            <option value="alipay">支付宝</option>
+            <option value="wechat">微信</option>
+            <option value="usdt">USDT</option>
+          </select>
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium mb-2">备注说明</label>
+          <textarea name="remark" rows="3" placeholder="选填..." 
+            class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary"></textarea>
+        </div>
+        
+        <div class="flex justify-end gap-3 pt-4 border-t border-gray-700">
+          <button type="button" onclick="this.closest('#player-withdraw-modal').remove()" 
+            class="px-5 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg transition-colors">
+            <i class="fas fa-times mr-1.5"></i>取消
+          </button>
+          <button type="submit" 
+            class="px-5 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition-colors">
+            <i class="fas fa-check mr-1.5"></i>确认提款
+          </button>
+        </div>
+      </form>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  
+  document.getElementById('player-withdraw-form').onsubmit = async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const data = {
+      player_id: playerId,
+      amount: parseFloat(formData.get('amount')),
+      withdraw_method: formData.get('withdraw_method'),
+      remark: formData.get('remark')
+    };
+    
+    try {
+      const result = await api('/api/players/withdraw', {
+        method: 'POST',
+        body: JSON.stringify(data)
+      });
+      
+      if (result.success) {
+        showToast('提款成功', 'success');
+        modal.remove();
+        closePlayerDetailModal();
+        viewPlayer(playerId);
+      } else {
+        showToast(result.error || '提款失败', 'error');
+      }
+    } catch (error) {
+      console.error('Withdraw error:', error);
+      showToast('提款失败: ' + error.message, 'error');
+    }
+  };
 }
 
 // 查看余额详情

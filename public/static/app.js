@@ -7590,85 +7590,34 @@ async function renderReports(container) {
       </div>
       
       <!-- 统计卡片 -->
-      <div id="agent-summary" class="grid grid-cols-2 md:grid-cols-4 gap-6 p-6 border-b border-gray-700 bg-gradient-to-br from-gray-800 to-gray-900">
-        <!-- 代理总数 -->
-        <div class="bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl p-5 shadow-lg hover:shadow-xl transition-shadow">
-          <div class="flex items-center justify-between mb-3">
-            <p class="text-blue-100 text-sm font-medium">代理总数</p>
-            <i class="fas fa-users text-2xl text-blue-200 opacity-75"></i>
-          </div>
-          <p class="text-3xl font-bold text-white" id="agent-total-count">-</p>
-          <p class="text-blue-200 text-xs mt-2 opacity-90">总代理账号数</p>
+      <div id="agent-summary" class="grid grid-cols-2 md:grid-cols-7 gap-4 p-4 border-b border-gray-700 bg-gray-750">
+        <div class="text-center">
+          <p class="text-gray-400 text-xs">代理总数</p>
+          <p class="text-lg font-bold text-primary" id="agent-total-count">-</p>
         </div>
-        
-        <!-- 玩家总数 -->
-        <div class="bg-gradient-to-br from-cyan-600 to-cyan-700 rounded-xl p-5 shadow-lg hover:shadow-xl transition-shadow">
-          <div class="flex items-center justify-between mb-3">
-            <p class="text-cyan-100 text-sm font-medium">玩家总数</p>
-            <i class="fas fa-user-friends text-2xl text-cyan-200 opacity-75"></i>
-          </div>
-          <p class="text-3xl font-bold text-white" id="agent-total-players">-</p>
-          <p class="text-cyan-200 text-xs mt-2 opacity-90">活跃玩家数量</p>
+        <div class="text-center">
+          <p class="text-gray-400 text-xs">玩家总数</p>
+          <p class="text-lg font-bold text-blue-400" id="agent-total-players">-</p>
         </div>
-        
-        <!-- 总投注额 -->
-        <div class="bg-gradient-to-br from-purple-600 to-purple-700 rounded-xl p-5 shadow-lg hover:shadow-xl transition-shadow">
-          <div class="flex items-center justify-between mb-3">
-            <p class="text-purple-100 text-sm font-medium">总投注额</p>
-            <i class="fas fa-coins text-2xl text-purple-200 opacity-75"></i>
-          </div>
-          <p class="text-3xl font-bold text-white" id="agent-total-bet">-</p>
-          <p class="text-purple-200 text-xs mt-2 opacity-90">累计投注金额</p>
+        <div class="text-center">
+          <p class="text-gray-400 text-xs">总投注额</p>
+          <p class="text-lg font-bold text-cyan-400" id="agent-total-bet">-</p>
         </div>
-        
-        <!-- 输赢金额 -->
-        <div class="bg-gradient-to-br from-indigo-600 to-indigo-700 rounded-xl p-5 shadow-lg hover:shadow-xl transition-shadow">
-          <div class="flex items-center justify-between mb-3">
-            <p class="text-indigo-100 text-sm font-medium">输赢金额</p>
-            <i class="fas fa-chart-line text-2xl text-indigo-200 opacity-75"></i>
-          </div>
-          <p class="text-3xl font-bold text-white" id="agent-total-profit">-</p>
-          <p class="text-indigo-200 text-xs mt-2 opacity-90">玩家输赢总额</p>
+        <div class="text-center">
+          <p class="text-gray-400 text-xs">输赢金额</p>
+          <p class="text-lg font-bold" id="agent-total-profit">-</p>
         </div>
-        
-        <!-- 洗码费 -->
-        <div class="bg-gradient-to-br from-yellow-600 to-yellow-700 rounded-xl p-5 shadow-lg hover:shadow-xl transition-shadow">
-          <div class="flex items-center justify-between mb-3">
-            <p class="text-yellow-100 text-sm font-medium">洗码费</p>
-            <i class="fas fa-hand-holding-usd text-2xl text-yellow-200 opacity-75"></i>
-          </div>
-          <p class="text-3xl font-bold text-white" id="agent-total-commission">-</p>
-          <p class="text-yellow-200 text-xs mt-2 opacity-90">总洗码费支出</p>
+        <div class="text-center">
+          <p class="text-gray-400 text-xs">洗码费</p>
+          <p class="text-lg font-bold text-yellow-400" id="agent-total-commission">-</p>
         </div>
-        
-        <!-- 代理占成收 -->
-        <div class="bg-gradient-to-br from-orange-600 to-orange-700 rounded-xl p-5 shadow-lg hover:shadow-xl transition-shadow">
-          <div class="flex items-center justify-between mb-3">
-            <p class="text-orange-100 text-sm font-medium">代理占成收</p>
-            <i class="fas fa-percentage text-2xl text-orange-200 opacity-75"></i>
-          </div>
-          <p class="text-3xl font-bold text-white" id="agent-total-share">-</p>
-          <p class="text-orange-200 text-xs mt-2 opacity-90">代理总占成金额</p>
+        <div class="text-center">
+          <p class="text-gray-400 text-xs">代理占成收</p>
+          <p class="text-lg font-bold text-orange-400" id="agent-total-share">-</p>
         </div>
-        
-        <!-- 公司盈利 -->
-        <div class="bg-gradient-to-br from-green-600 to-green-700 rounded-xl p-5 shadow-lg hover:shadow-xl transition-shadow">
-          <div class="flex items-center justify-between mb-3">
-            <p class="text-green-100 text-sm font-medium">公司盈利</p>
-            <i class="fas fa-trophy text-2xl text-green-200 opacity-75"></i>
-          </div>
-          <p class="text-3xl font-bold text-white" id="agent-net-profit">-</p>
-          <p class="text-green-200 text-xs mt-2 opacity-90">公司净利润</p>
-        </div>
-        
-        <!-- 占位空白（保持网格整齐） -->
-        <div class="bg-gray-700 bg-opacity-30 rounded-xl p-5 border-2 border-dashed border-gray-600">
-          <div class="flex items-center justify-center h-full">
-            <div class="text-center">
-              <i class="fas fa-plus-circle text-3xl text-gray-500 mb-2"></i>
-              <p class="text-gray-500 text-xs">待扩展</p>
-            </div>
-          </div>
+        <div class="text-center">
+          <p class="text-gray-400 text-xs">公司盈利</p>
+          <p class="text-lg font-bold text-green-400" id="agent-net-profit">-</p>
         </div>
       </div>
       <div class="overflow-x-auto">

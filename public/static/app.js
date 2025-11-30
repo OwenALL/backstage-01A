@@ -2567,8 +2567,10 @@ async function renderBets(container) {
               <th class="text-left p-3 text-xs">时间</th>
               <th class="text-left p-3 text-xs">会员</th>
               <th class="text-left p-3 text-xs">代理</th>
-              <th class="text-left p-3 text-xs">游戏/桌台</th>
-              <th class="text-left p-3 text-xs">投注类型</th>
+              <th class="text-left p-3 text-xs">游戏</th>
+              <th class="text-left p-3 text-xs">期号</th>
+              <th class="text-left p-3 text-xs">类型</th>
+              <th class="text-left p-3 text-xs">投注点</th>
               <th class="text-right p-3 text-xs">投注金额</th>
               <th class="text-right p-3 text-xs">有效投注</th>
               <th class="text-right p-3 text-xs">派彩</th>
@@ -2579,7 +2581,7 @@ async function renderBets(container) {
             </tr>
           </thead>
           <tbody id="bets-tbody">
-            <tr><td colspan="13" class="p-8 text-center text-gray-400">点击「查询」加载注单数据</td></tr>
+            <tr><td colspan="15" class="p-8 text-center text-gray-400">点击「查询」加载注单数据</td></tr>
           </tbody>
         </table>
       </div>
@@ -2678,7 +2680,7 @@ async function searchBets(page = 1) {
       
       // 渲染表格
       if (bets.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="13" class="p-8 text-center text-gray-400">暂无符合条件的注单</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="15" class="p-8 text-center text-gray-400">暂无符合条件的注单</td></tr>';
         return;
       }
       
@@ -2704,7 +2706,13 @@ async function searchBets(page = 1) {
               <p class="text-sm">${getGameTypeName(b.game_type)}</p>
               <p class="text-xs text-gray-400">${escapeHtml(b.table_code || '-')}</p>
             </td>
+            <td class="p-3">
+              <p class="font-mono text-xs text-cyan-400">${escapeHtml(b.game_round || '-')}</p>
+            </td>
             <td class="p-3 text-xs">${escapeHtml(b.bet_type || '-')}</td>
+            <td class="p-3 text-xs">
+              <span class="px-2 py-1 bg-blue-900 bg-opacity-30 rounded text-xs">${escapeHtml(b.bet_selection || '-')}</span>
+            </td>
             <td class="p-3 text-right font-mono text-sm">${formatCurrency(b.bet_amount)}</td>
             <td class="p-3 text-right font-mono text-sm text-gray-400">${formatCurrency(b.valid_bet_amount)}</td>
             <td class="p-3 text-right font-mono text-sm">${formatCurrency(b.payout)}</td>
@@ -2723,10 +2731,10 @@ async function searchBets(page = 1) {
         `;
       }).join('');
     } else {
-      tbody.innerHTML = `<tr><td colspan="13" class="p-8 text-center text-red-400">加载失败: ${result.error}</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="15" class="p-8 text-center text-red-400">加载失败: ${result.error}</td></tr>`;
     }
   } catch (error) {
-    tbody.innerHTML = '<tr><td colspan="13" class="p-8 text-center text-red-400">加载失败，请稍后重试</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="15" class="p-8 text-center text-red-400">加载失败，请稍后重试</td></tr>';
   }
 }
 
@@ -5618,18 +5626,18 @@ async function renderReports(container) {
     
     <!-- Tabs -->
     <div class="flex flex-wrap gap-2 mb-6">
-      <button id="tab-transactions" onclick="switchReportTab('transactions')" class="px-4 py-2 bg-primary rounded-lg text-sm"><i class="fas fa-list mr-1"></i>全流水记录</button>
-      <button id="tab-comprehensive" onclick="switchReportTab('comprehensive')" class="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 text-sm"><i class="fas fa-chart-pie mr-1"></i>综合报表</button>
-      <button id="tab-ranking" onclick="switchReportTab('ranking')" class="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 text-sm"><i class="fas fa-trophy mr-1"></i>玩家排名</button>
-      <button id="tab-daily-summary" onclick="switchReportTab('daily-summary')" class="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 text-sm"><i class="fas fa-calendar-day mr-1"></i>每日汇总</button>
-      <button id="tab-game-revenue" onclick="switchReportTab('game-revenue')" class="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 text-sm"><i class="fas fa-gamepad mr-1"></i>游戏营收</button>
-      <button id="tab-agent-perf" onclick="switchReportTab('agent-perf')" class="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 text-sm"><i class="fas fa-users mr-1"></i>代理业绩</button>
-      <button id="tab-account" onclick="switchReportTab('account')" class="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 text-sm">账户明细</button>
-      <button id="tab-daily" onclick="switchReportTab('daily')" class="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 text-sm">日结算</button>
+      <button id="tab-bet-details" onclick="switchReportTab('bet-details')" class="px-4 py-2 bg-primary rounded-lg text-sm"><i class="fas fa-file-invoice mr-1"></i>1. 注单明细</button>
+      <button id="tab-settle" onclick="switchReportTab('settle')" class="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 text-sm"><i class="fas fa-calculator mr-1"></i>2. 结算报表</button>
+      <button id="tab-profit-share" onclick="switchReportTab('profit-share')" class="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 text-sm"><i class="fas fa-chart-pie mr-1"></i>3. 盈利分成</button>
+      <button id="tab-ranking" onclick="switchReportTab('ranking')" class="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 text-sm"><i class="fas fa-trophy mr-1"></i>4. 盈亏排行</button>
+      <button id="tab-game-report" onclick="switchReportTab('game-report')" class="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 text-sm"><i class="fas fa-gamepad mr-1"></i>5. 游戏报表</button>
+      <button id="tab-daily-report" onclick="switchReportTab('daily-report')" class="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 text-sm"><i class="fas fa-calendar-day mr-1"></i>6. 盈亏日报</button>
+      <button id="tab-agent-perf" onclick="switchReportTab('agent-perf')" class="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 text-sm"><i class="fas fa-users mr-1"></i>7. 代理业绩</button>
+      <button id="tab-transfers" onclick="switchReportTab('transfers')" class="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 text-sm"><i class="fas fa-exchange-alt mr-1"></i>8. 转账记录</button>
     </div>
     
-    <!-- 1. 全流水记录 -->
-    <div id="report-transactions" class="bg-gray-800 rounded-xl overflow-hidden">
+    <!-- 1. 注单明细 -->
+    <div id="report-bet-details" class="bg-gray-800 rounded-xl overflow-hidden">
       <div class="p-4 border-b border-gray-700">
         <div class="flex flex-wrap gap-4 items-end mb-3">
           <div>
@@ -5641,33 +5649,37 @@ async function renderReports(container) {
             <input type="date" id="trans-end" value="${dayjs().format('YYYY-MM-DD')}" class="bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm">
           </div>
           <div>
-            <label class="text-gray-400 text-xs block mb-1">交易类型</label>
-            <select id="trans-type" class="bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm w-36">
-              <option value="">全部类型</option>
-              <option value="1">存款</option>
-              <option value="2">取款</option>
-              <option value="3">投注扣款</option>
-              <option value="4">派彩增加</option>
-              <option value="5">红利赠送</option>
-              <option value="6">洗码返水</option>
-              <option value="7">人工增加</option>
-              <option value="8">人工扣除</option>
-              <option value="9">转账转出</option>
-              <option value="10">转账转入</option>
-            </select>
-          </div>
-          <div>
-            <label class="text-gray-400 text-xs block mb-1">订单号</label>
-            <input type="text" id="trans-order" placeholder="输入订单号" class="bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm w-40">
+            <label class="text-gray-400 text-xs block mb-1">注单号</label>
+            <input type="text" id="bet-detail-no" placeholder="输入注单号" class="bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm w-40">
           </div>
           <div>
             <label class="text-gray-400 text-xs block mb-1">玩家ID/用户名</label>
-            <input type="text" id="trans-player" placeholder="玩家ID或用户名" class="bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm w-40">
+            <input type="text" id="bet-detail-player" placeholder="玩家ID或用户名" class="bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm w-40">
           </div>
-          <button onclick="loadTransactions()" class="bg-primary hover:bg-blue-700 px-4 py-2 rounded text-sm">
+          <div>
+            <label class="text-gray-400 text-xs block mb-1">游戏类型</label>
+            <select id="bet-detail-game" class="bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm w-32">
+              <option value="">全部游戏</option>
+              <option value="baccarat">百家乐</option>
+              <option value="roulette">轮盘</option>
+              <option value="dragon_tiger">龙虎</option>
+              <option value="sicbo">骰宝</option>
+              <option value="blackjack">21点</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-gray-400 text-xs block mb-1">注单状态</label>
+            <select id="bet-detail-status" class="bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm w-28">
+              <option value="">全部状态</option>
+              <option value="0">未结算</option>
+              <option value="1">已结算</option>
+              <option value="3">已作废</option>
+            </select>
+          </div>
+          <button onclick="loadBetDetails()" class="bg-primary hover:bg-blue-700 px-4 py-2 rounded text-sm">
             <i class="fas fa-search mr-2"></i>查询
           </button>
-          <button onclick="exportTransactions()" class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded text-sm">
+          <button onclick="exportBetDetails()" class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded text-sm">
             <i class="fas fa-download mr-2"></i>导出
           </button>
         </div>
@@ -5676,26 +5688,29 @@ async function renderReports(container) {
         <table class="w-full data-table">
           <thead class="bg-gray-700">
             <tr>
-              <th class="text-left p-3">订单号</th>
-              <th class="text-left p-3">类型</th>
+              <th class="text-left p-3">注单号</th>
               <th class="text-left p-3">玩家</th>
-              <th class="text-right p-3">变动前</th>
-              <th class="text-right p-3">变动金额</th>
-              <th class="text-right p-3">变动后</th>
-              <th class="text-left p-3">关联订单</th>
+              <th class="text-left p-3">游戏</th>
+              <th class="text-left p-3">期号</th>
+              <th class="text-left p-3">类型</th>
+              <th class="text-left p-3">投注点</th>
+              <th class="text-right p-3">投注金额</th>
+              <th class="text-right p-3">派彩</th>
+              <th class="text-right p-3">输赢</th>
+              <th class="text-center p-3">状态</th>
               <th class="text-left p-3">时间</th>
             </tr>
           </thead>
-          <tbody id="trans-tbody">
-            <tr><td colspan="8" class="p-8 text-center text-gray-400">请点击查询按钮加载数据</td></tr>
+          <tbody id="bet-detail-tbody">
+            <tr><td colspan="11" class="p-8 text-center text-gray-400">请点击查询按钮加载数据</td></tr>
           </tbody>
         </table>
       </div>
-      <div id="trans-pagination" class="p-4 border-t border-gray-700 flex justify-between items-center"></div>
+      <div id="bet-detail-pagination" class="p-4 border-t border-gray-700 flex justify-between items-center"></div>
     </div>
 
-    <!-- 2. 综合报表 -->
-    <div id="report-comprehensive" class="hidden bg-gray-800 rounded-xl overflow-hidden">
+    <!-- 3. 盈利分成（原综合报表） -->
+    <div id="report-profit-share" class="hidden bg-gray-800 rounded-xl overflow-hidden">
       <div class="p-4 border-b border-gray-700">
         <div class="flex flex-wrap gap-4 items-end mb-3">
           <div>
@@ -5819,8 +5834,8 @@ async function renderReports(container) {
       </div>
     </div>
 
-    <!-- 4. 每日盈亏汇总 -->
-    <div id="report-daily-summary" class="hidden bg-gray-800 rounded-xl overflow-hidden">
+    <!-- 6. 盈亏日报（原每日盈亏汇总） -->
+    <div id="report-daily-report" class="hidden bg-gray-800 rounded-xl overflow-hidden">
       <div class="p-4 border-b border-gray-700 flex flex-wrap gap-4 items-end">
         <div>
           <label class="text-gray-400 text-xs block mb-1">开始日期</label>
@@ -5854,8 +5869,8 @@ async function renderReports(container) {
       </div>
     </div>
 
-    <!-- 5. 游戏营收报表 -->
-    <div id="report-game-revenue" class="hidden bg-gray-800 rounded-xl overflow-hidden">
+    <!-- 5. 游戏报表（原游戏营收报表） -->
+    <div id="report-game-report" class="hidden bg-gray-800 rounded-xl overflow-hidden">
       <div class="p-4 border-b border-gray-700 flex flex-wrap gap-4 items-end">
         <div>
           <label class="text-gray-400 text-xs block mb-1">开始日期</label>
@@ -6249,9 +6264,8 @@ async function renderReports(container) {
       </div>
     </div>
     
-    <!-- 转账记录 -->
-    <!-- 账户明细报表 -->
-    <div id="report-account" class="bg-gray-800 rounded-xl overflow-hidden">
+    <!-- 8. 转账记录 -->
+    <div id="report-transfers" class="hidden bg-gray-800 rounded-xl overflow-hidden">
       <!-- 筛选区域 -->
       <div class="p-4 border-b border-gray-700">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -6354,8 +6368,7 @@ async function renderReports(container) {
       </div>
     </div>
     
-    <!-- 结算报表 -->
-    <!-- 结算报表 -->
+    <!-- 2. 结算报表 -->
     <div id="report-settle" class="hidden bg-gray-800 rounded-xl overflow-hidden">
       <!-- 第一行：快捷日期 + 日期范围 -->
       <div class="p-4 border-b border-gray-700">
@@ -6870,6 +6883,92 @@ async function loadGameRevenue() {
   }
 }
 
+// 加载注单明细
+async function loadBetDetails(page = 1) {
+  const startDate = document.getElementById('trans-start')?.value;
+  const endDate = document.getElementById('trans-end')?.value;
+  const betNo = document.getElementById('bet-detail-no')?.value?.trim();
+  const playerSearch = document.getElementById('bet-detail-player')?.value?.trim();
+  const gameType = document.getElementById('bet-detail-game')?.value;
+  const status = document.getElementById('bet-detail-status')?.value;
+  const tbody = document.getElementById('bet-detail-tbody');
+  
+  tbody.innerHTML = '<tr><td colspan="11" class="p-8 text-center text-gray-400"><i class="fas fa-spinner fa-spin mr-2"></i>加载中...</td></tr>';
+  
+  let url = `/api/reports/bet-details?start_date=${startDate}&end_date=${endDate}&page=${page}&limit=50`;
+  if (betNo) url += `&bet_no=${encodeURIComponent(betNo)}`;
+  if (playerSearch) url += `&player_search=${encodeURIComponent(playerSearch)}`;
+  if (gameType) url += `&game_type=${gameType}`;
+  if (status) url += `&bet_status=${status}`;
+  
+  const result = await api(url);
+  
+  if (result.success && result.data && result.data.length > 0) {
+    tbody.innerHTML = result.data.map(b => {
+      const winLoss = (b.payout || 0) - (b.bet_amount || 0);
+      const statusClass = b.bet_status === 1 ? 'bg-green-600' : b.bet_status === 0 ? 'bg-yellow-600' : 'bg-gray-600';
+      const statusText = b.bet_status === 1 ? '已结算' : b.bet_status === 0 ? '未结算' : '已作废';
+      
+      return `
+        <tr class="border-t border-gray-700 hover:bg-gray-750">
+          <td class="p-3 font-mono text-xs text-primary">${escapeHtml(b.bet_no || '-')}</td>
+          <td class="p-3">
+            <p class="font-medium text-sm">${escapeHtml(b.username || '-')}</p>
+            <p class="text-xs text-gray-400">VIP${b.vip_level || 0}</p>
+          </td>
+          <td class="p-3">${getGameTypeName(b.game_type)}</td>
+          <td class="p-3 font-mono text-xs text-cyan-400">${escapeHtml(b.game_round || '-')}</td>
+          <td class="p-3 text-xs">${escapeHtml(b.bet_type || '-')}</td>
+          <td class="p-3">
+            <span class="px-2 py-1 bg-blue-900 bg-opacity-30 rounded text-xs">${escapeHtml(b.bet_selection || '-')}</span>
+          </td>
+          <td class="p-3 text-right font-mono">${formatCurrency(b.bet_amount)}</td>
+          <td class="p-3 text-right font-mono">${formatCurrency(b.payout)}</td>
+          <td class="p-3 text-right font-mono ${winLoss >= 0 ? 'text-green-400' : 'text-red-400'}">${winLoss >= 0 ? '+' : ''}${formatCurrency(winLoss)}</td>
+          <td class="p-3 text-center"><span class="px-2 py-1 rounded text-xs ${statusClass}">${statusText}</span></td>
+          <td class="p-3 text-sm text-gray-400">${formatDateTime(b.created_at)}</td>
+        </tr>
+      `;
+    }).join('');
+    
+    // 显示分页信息
+    const pagination = document.getElementById('bet-detail-pagination');
+    const total = result.pagination?.total || 0;
+    const limit = result.pagination?.limit || 50;
+    const totalPages = Math.ceil(total / limit);
+    pagination.innerHTML = `
+      <div class="text-sm text-gray-400">
+        共 <span class="text-white font-medium">${total}</span> 条记录，第 ${page}/${totalPages} 页
+      </div>
+      <div class="flex gap-2">
+        ${page > 1 ? `<button onclick="loadBetDetails(${page - 1})" class="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-sm">上一页</button>` : ''}
+        ${page < totalPages ? `<button onclick="loadBetDetails(${page + 1})" class="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-sm">下一页</button>` : ''}
+      </div>
+    `;
+  } else {
+    tbody.innerHTML = '<tr><td colspan="11" class="p-8 text-center text-gray-400">暂无数据</td></tr>';
+    document.getElementById('bet-detail-pagination').innerHTML = '';
+  }
+}
+
+// 导出注单明细
+async function exportBetDetails() {
+  const startDate = document.getElementById('trans-start')?.value;
+  const endDate = document.getElementById('trans-end')?.value;
+  const betNo = document.getElementById('bet-detail-no')?.value?.trim();
+  const playerSearch = document.getElementById('bet-detail-player')?.value?.trim();
+  const gameType = document.getElementById('bet-detail-game')?.value;
+  const status = document.getElementById('bet-detail-status')?.value;
+  
+  let url = `/api/reports/export?type=bet-details&start_date=${startDate}&end_date=${endDate}`;
+  if (betNo) url += `&bet_no=${encodeURIComponent(betNo)}`;
+  if (playerSearch) url += `&player_search=${encodeURIComponent(playerSearch)}`;
+  if (gameType) url += `&game_type=${gameType}`;
+  if (status) url += `&bet_status=${status}`;
+  
+  window.open(url, '_blank');
+}
+
 // 加载代理业绩
 async function loadAgentPerformance() {
   const startDate = document.getElementById('agent-start')?.value;
@@ -6950,19 +7049,13 @@ function switchReportTab(tab) {
   
   // 根据标签自动加载数据
   switch(tab) {
-    case 'transactions': loadTransactions(); break;
-    case 'comprehensive': loadComprehensive(); break;
+    case 'bet-details': loadBetDetails(); break;
+    case 'settle': loadSettlementReport(); break;
+    case 'profit-share': loadComprehensive(); break;
     case 'ranking': loadRanking(); break;
-    case 'daily-summary': loadDailySummary(); break;
-    case 'game-revenue': loadGameRevenue(); break;
+    case 'game-report': loadGameRevenue(); break;
+    case 'daily-report': loadDailySummary(); break;
     case 'agent-perf': loadAgentPerformance(); break;
-    case 'account': loadAccountDetails(); break;
-    case 'settle': loadSettleReport(); break;
-    case 'daily': loadDailyReport(); break;
-    case 'profit': loadProfitAnalysis(); break;
-    case 'settlement': loadSettlementReport(); break;
-    case 'game': loadGameReport(); break;
-    case 'rank': loadLeaderboard(); break;
     case 'transfers': loadTransferRecords(); break;
   }
 }

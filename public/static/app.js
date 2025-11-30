@@ -1375,15 +1375,15 @@ async function renderFinance(container) {
   container.innerHTML = `
     <!-- Tabs -->
     <div class="flex flex-wrap gap-2 mb-6">
-      <button id="tab-withdraw" onclick="switchFinanceTab('withdraw')" class="px-4 py-2 bg-primary rounded-lg">提款审核 <span class="bg-red-500 text-xs px-2 py-0.5 rounded-full ml-1">${withdraws.length}</span></button>
-      <button id="tab-deposit" onclick="switchFinanceTab('deposit')" class="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600">存款审核 <span class="bg-yellow-500 text-xs px-2 py-0.5 rounded-full ml-1">${deposits.length}</span></button>
-      <button id="tab-manual" onclick="switchFinanceTab('manual')" class="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600">人工存取款</button>
-      <button id="tab-payment" onclick="switchFinanceTab('payment')" class="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600">收款方式设置</button>
+      <button id="tab-manual" onclick="switchFinanceTab('manual')" class="px-4 py-2 bg-primary rounded-lg">人工存取款</button>
       <button id="tab-flow" onclick="switchFinanceTab('flow')" class="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600">账户明细</button>
+      <button id="tab-withdraw" onclick="switchFinanceTab('withdraw')" class="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600">提款审核 <span class="bg-red-500 text-xs px-2 py-0.5 rounded-full ml-1">${withdraws.length}</span></button>
+      <button id="tab-deposit" onclick="switchFinanceTab('deposit')" class="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600">存款审核 <span class="bg-yellow-500 text-xs px-2 py-0.5 rounded-full ml-1">${deposits.length}</span></button>
+      <button id="tab-payment" onclick="switchFinanceTab('payment')" class="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600">收款方式设置</button>
     </div>
     
     <!-- 提款审核 -->
-    <div id="finance-withdraw" class="bg-gray-800 rounded-xl overflow-hidden">
+    <div id="finance-withdraw" class="bg-gray-800 rounded-xl overflow-hidden hidden">
       <table class="w-full data-table">
         <thead class="bg-gray-700">
           <tr>
@@ -1468,7 +1468,7 @@ async function renderFinance(container) {
     </div>
     
     <!-- 人工存取款 -->
-    <div id="finance-manual" class="hidden">
+    <div id="finance-manual">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <!-- 人工存款 -->
         <div class="bg-gray-800 rounded-xl p-6">

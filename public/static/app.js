@@ -7315,18 +7315,19 @@ async function renderReports(container) {
         <table class="w-full data-table">
           <thead class="bg-gray-700">
             <tr>
-              <th class="text-left p-3">维度</th>
+              <th class="text-left p-3">时间</th>
               <th class="text-right p-3">总投注</th>
-              <th class="text-right p-3">输赢金额</th>
-              <th class="text-right p-3">洗码费</th>
-              <th class="text-right p-3">占成收</th>
-              <th class="text-right p-3">公司盈利</th>
+              <th class="text-right p-3">有效投注</th>
+              <th class="text-right p-3">总输赢</th>
+              <th class="text-right p-3">所有洗码费</th>
+              <th class="text-right p-3">所有占成</th>
+              <th class="text-right p-3">公司盈亏</th>
               <th class="text-right p-3">玩家数</th>
               <th class="text-right p-3">注单数</th>
             </tr>
           </thead>
           <tbody id="comp-tbody">
-            <tr><td colspan="8" class="p-8 text-center text-gray-400">请选择条件并生成报表</td></tr>
+            <tr><td colspan="9" class="p-8 text-center text-gray-400">请选择条件并生成报表</td></tr>
           </tbody>
         </table>
       </div>

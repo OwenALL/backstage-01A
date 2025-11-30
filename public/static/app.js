@@ -6162,6 +6162,7 @@ async function renderReports(container) {
       <button id="tab-daily-report" onclick="switchReportTab('daily-report')" class="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 text-sm"><i class="fas fa-calendar-day mr-1"></i>6. 盈亏日报</button>
       <button id="tab-agent-perf" onclick="switchReportTab('agent-perf')" class="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 text-sm"><i class="fas fa-users mr-1"></i>7. 代理业绩</button>
       <button id="tab-transfers" onclick="switchReportTab('transfers')" class="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 text-sm"><i class="fas fa-exchange-alt mr-1"></i>8. 转账记录</button>
+      <button id="tab-transfer-fee" onclick="switchReportTab('transfer-fee')" class="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 text-sm"><i class="fas fa-percentage mr-1"></i>9. 手续费设置</button>
     </div>
     
     <!-- 1. 注单明细 -->
@@ -7045,15 +7046,8 @@ async function renderReports(container) {
       </div>
     </div>
     
-    <div id="report-transfers" class="hidden">
-      <!-- 子标签页 -->
-      <div class="flex space-x-4 mb-4">
-        <button id="tab-transfer-list" onclick="switchTransferTab('list')" class="px-4 py-2 bg-primary rounded-lg text-sm">转账记录</button>
-        <button id="tab-transfer-fee" onclick="switchTransferTab('fee')" class="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 text-sm">手续费设置</button>
-      </div>
-      
-      <!-- 转账记录列表 -->
-      <div id="transfer-list-panel" class="bg-gray-800 rounded-xl overflow-hidden">
+    <!-- 8. 转账记录 -->
+    <div id="report-transfers" class="hidden bg-gray-800 rounded-xl overflow-hidden">
         <div class="p-4 border-b border-gray-700">
           <div class="flex flex-wrap gap-4 items-center">
             <div>
@@ -7133,21 +7127,21 @@ async function renderReports(container) {
           </table>
         </div>
       </div>
-      
-      <!-- 手续费设置面板 -->
-      <div id="transfer-fee-panel" class="hidden bg-gray-800 rounded-xl overflow-hidden">
-        <div class="p-4 border-b border-gray-700 flex justify-between items-center">
-          <div>
-            <h4 class="font-semibold"><i class="fas fa-percentage text-primary mr-2"></i>转账手续费设置</h4>
-            <p class="text-sm text-gray-400 mt-1">配置会员间转账的手续费规则</p>
-          </div>
-          <button onclick="showAddTransferFeeModal()" class="bg-primary hover:bg-blue-700 px-4 py-2 rounded-lg text-sm">
-            <i class="fas fa-plus mr-1"></i>新增设置
-          </button>
+    </div>
+    
+    <!-- 9. 手续费设置 -->
+    <div id="report-transfer-fee" class="hidden bg-gray-800 rounded-xl overflow-hidden">
+      <div class="p-4 border-b border-gray-700 flex justify-between items-center">
+        <div>
+          <h4 class="font-semibold"><i class="fas fa-percentage text-primary mr-2"></i>转账手续费设置</h4>
+          <p class="text-sm text-gray-400 mt-1">配置会员间转账的手续费规则</p>
         </div>
-        <div id="transfer-fee-list" class="p-4">
-          <p class="text-center text-gray-400 py-8"><i class="fas fa-spinner fa-spin mr-2"></i>加载中...</p>
-        </div>
+        <button onclick="showAddTransferFeeModal()" class="bg-primary hover:bg-blue-700 px-4 py-2 rounded-lg text-sm">
+          <i class="fas fa-plus mr-1"></i>新增设置
+        </button>
+      </div>
+      <div id="transfer-fee-list" class="p-4">
+        <p class="text-center text-gray-400 py-8"><i class="fas fa-spinner fa-spin mr-2"></i>加载中...</p>
       </div>
     </div>
   `;
@@ -7591,6 +7585,7 @@ function switchReportTab(tab) {
     case 'daily-report': loadDailySummary(); break;
     case 'agent-perf': loadAgentPerformance(); break;
     case 'transfers': loadTransferRecords(); break;
+    case 'transfer-fee': loadTransferFeeSettings(); break;
   }
 }
 
@@ -7934,30 +7929,6 @@ function exportReport(type) {
 }
 
 // 转账记录子标签切换
-function switchTransferTab(tab) {
-  const listPanel = document.getElementById('transfer-list-panel');
-  const feePanel = document.getElementById('transfer-fee-panel');
-  const tabList = document.getElementById('tab-transfer-list');
-  const tabFee = document.getElementById('tab-transfer-fee');
-  
-  if (tab === 'list') {
-    listPanel?.classList.remove('hidden');
-    feePanel?.classList.add('hidden');
-    tabList?.classList.remove('bg-gray-700');
-    tabList?.classList.add('bg-primary');
-    tabFee?.classList.remove('bg-primary');
-    tabFee?.classList.add('bg-gray-700');
-  } else if (tab === 'fee') {
-    listPanel?.classList.add('hidden');
-    feePanel?.classList.remove('hidden');
-    tabFee?.classList.remove('bg-gray-700');
-    tabFee?.classList.add('bg-primary');
-    tabList?.classList.remove('bg-primary');
-    tabList?.classList.add('bg-gray-700');
-    loadTransferFeeSettings();
-  }
-}
-
 // 加载手续费设置列表
 async function loadTransferFeeSettings() {
   const container = document.getElementById('transfer-fee-list');

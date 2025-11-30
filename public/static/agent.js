@@ -2225,7 +2225,7 @@ function showAddPlayerModal() {
             <input type="email" name="email" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 focus:border-primary focus:outline-none" placeholder="可选">
           </div>
           <div>
-            <label class="block text-gray-300 text-sm mb-2">洗码百分百 (%)</label>
+            <label class="block text-gray-300 text-sm mb-2">洗码率 (%)</label>
             <input type="number" name="rebate_ratio" value="0" min="0" max="100" step="0.01" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 focus:border-primary focus:outline-none" placeholder="0-100">
           </div>
         </div>

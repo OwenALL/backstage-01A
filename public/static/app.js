@@ -6449,16 +6449,89 @@ async function renderReports(container) {
 
     <!-- 6. 代理业绩统计 -->
     <div id="report-agent-perf" class="hidden bg-gray-800 rounded-xl overflow-hidden">
-      <div class="p-4 border-b border-gray-700 flex flex-wrap gap-4 items-end">
-        <div>
-          <label class="text-gray-400 text-xs block mb-1">开始日期</label>
-          <input type="date" id="agent-start" value="${dayjs().subtract(30, 'day').format('YYYY-MM-DD')}" class="bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm">
+      <!-- 查询栏 -->
+      <div class="bg-gradient-to-r from-gray-750 to-gray-800 px-4 py-4 border-b border-gray-700">
+        <div class="flex flex-wrap gap-3 items-end">
+          <div class="flex-1 min-w-[140px]">
+            <label class="text-gray-300 text-xs block mb-1.5 font-medium">开始日期</label>
+            <input type="date" id="agent-start" value="${dayjs().subtract(30, 'day').format('YYYY-MM-DD')}" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none transition-all">
+          </div>
+          <div class="flex-1 min-w-[140px]">
+            <label class="text-gray-300 text-xs block mb-1.5 font-medium">结束日期</label>
+            <input type="date" id="agent-end" value="${dayjs().format('YYYY-MM-DD')}" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none transition-all">
+          </div>
+          <div class="flex-1 min-w-[160px]">
+            <label class="text-gray-300 text-xs block mb-1.5 font-medium">代理账号</label>
+            <input type="text" id="agent-search" placeholder="代理账号/ID" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none transition-all">
+          </div>
+          <div class="flex-1 min-w-[120px]">
+            <label class="text-gray-300 text-xs block mb-1.5 font-medium">代理级别</label>
+            <select id="agent-level-filter" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none transition-all">
+              <option value="">全部级别</option>
+              <option value="1">一级代理</option>
+              <option value="2">二级代理</option>
+              <option value="3">三级代理</option>
+              <option value="4">四级代理</option>
+              <option value="5">五级代理</option>
+            </select>
+          </div>
+          <div class="flex-1 min-w-[140px]">
+            <label class="text-gray-300 text-xs block mb-1.5 font-medium">最小投注额</label>
+            <input type="number" id="agent-min-bet" placeholder="0" min="0" step="1000" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none transition-all">
+          </div>
+          <div class="flex-1 min-w-[120px]">
+            <label class="text-gray-300 text-xs block mb-1.5 font-medium">排序方式</label>
+            <select id="agent-sort" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none transition-all">
+              <option value="total_bet_desc">投注额↓</option>
+              <option value="total_bet_asc">投注额↑</option>
+              <option value="profit_desc">盈亏↓</option>
+              <option value="profit_asc">盈亏↑</option>
+              <option value="commission_desc">佣金↓</option>
+              <option value="commission_asc">佣金↑</option>
+              <option value="players_desc">玩家数↓</option>
+              <option value="players_asc">玩家数↑</option>
+            </select>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="loadAgentPerformance()" class="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 px-5 py-2 rounded-lg text-sm font-medium shadow-lg shadow-red-900/30 transition-all">
+              <i class="fas fa-search mr-1.5"></i>查询
+            </button>
+            <button onclick="exportAgentPerformance()" class="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 px-5 py-2 rounded-lg text-sm font-medium shadow-lg shadow-green-900/30 transition-all">
+              <i class="fas fa-download mr-1.5"></i>导出
+            </button>
+            <button onclick="resetAgentFilters()" class="bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 px-5 py-2 rounded-lg text-sm font-medium shadow-lg transition-all">
+              <i class="fas fa-redo mr-1.5"></i>重置
+            </button>
+          </div>
         </div>
-        <div>
-          <label class="text-gray-400 text-xs block mb-1">结束日期</label>
-          <input type="date" id="agent-end" value="${dayjs().format('YYYY-MM-DD')}" class="bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm">
+      </div>
+      
+      <!-- 统计卡片 -->
+      <div id="agent-summary" class="grid grid-cols-2 md:grid-cols-6 gap-4 p-4 border-b border-gray-700 bg-gray-750">
+        <div class="text-center">
+          <p class="text-gray-400 text-xs">代理总数</p>
+          <p class="text-lg font-bold text-primary" id="agent-total-count">-</p>
         </div>
-        <button onclick="loadAgentPerformance()" class="bg-primary hover:bg-blue-700 px-4 py-2 rounded text-sm"><i class="fas fa-search mr-2"></i>查询</button>
+        <div class="text-center">
+          <p class="text-gray-400 text-xs">玩家总数</p>
+          <p class="text-lg font-bold text-blue-400" id="agent-total-players">-</p>
+        </div>
+        <div class="text-center">
+          <p class="text-gray-400 text-xs">总投注额</p>
+          <p class="text-lg font-bold text-cyan-400" id="agent-total-bet">-</p>
+        </div>
+        <div class="text-center">
+          <p class="text-gray-400 text-xs">公司盈亏</p>
+          <p class="text-lg font-bold" id="agent-total-profit">-</p>
+        </div>
+        <div class="text-center">
+          <p class="text-gray-400 text-xs">代理佣金</p>
+          <p class="text-lg font-bold text-yellow-400" id="agent-total-commission">-</p>
+        </div>
+        <div class="text-center">
+          <p class="text-gray-400 text-xs">净利润</p>
+          <p class="text-lg font-bold text-green-400" id="agent-net-profit">-</p>
+        </div>
       </div>
       <div class="overflow-x-auto">
         <table class="w-full data-table">
@@ -7501,33 +7574,124 @@ async function exportBetDetails() {
 async function loadAgentPerformance() {
   const startDate = document.getElementById('agent-start')?.value;
   const endDate = document.getElementById('agent-end')?.value;
+  const agentSearch = document.getElementById('agent-search')?.value || '';
+  const agentLevel = document.getElementById('agent-level-filter')?.value || '';
+  const minBet = document.getElementById('agent-min-bet')?.value || '';
+  const sortBy = document.getElementById('agent-sort')?.value || 'total_bet_desc';
   const tbody = document.getElementById('agent-tbody');
+  
+  if (!tbody) return;
   
   tbody.innerHTML = '<tr><td colspan="8" class="p-8 text-center text-gray-400"><i class="fas fa-spinner fa-spin mr-2"></i>加载中...</td></tr>';
   
-  const result = await api(`/api/reports/agent-performance?start_date=${startDate}&end_date=${endDate}`);
-  
-  if (result.success && result.data.length > 0) {
-    tbody.innerHTML = result.data.map(a => `
-      <tr class="border-t border-gray-700 hover:bg-gray-750">
-        <td class="p-3">
-          <p class="font-medium">${escapeHtml(a.agent_username)}</p>
-          <p class="text-xs text-gray-400">${escapeHtml(a.nickname || '')}</p>
-        </td>
-        <td class="p-3"><span class="px-2 py-1 rounded text-xs ${
-          a.level === 'shareholder' ? 'bg-yellow-600' : 
-          a.level === 'general_agent' ? 'bg-blue-600' : 'bg-gray-600'
-        }">${a.level === 'shareholder' ? '股东' : a.level === 'general_agent' ? '总代' : '代理'}</span></td>
-        <td class="p-3 text-right">${a.downline_count || 0}</td>
-        <td class="p-3 text-right">${a.player_count || 0}</td>
-        <td class="p-3 text-right">${formatCurrency(a.total_bet)}</td>
-        <td class="p-3 text-right ${a.company_profit >= 0 ? 'text-green-400' : 'text-red-400'}">${formatCurrency(a.company_profit)}</td>
-        <td class="p-3 text-right text-yellow-400">${formatCurrency(a.agent_commission)}</td>
-        <td class="p-3 text-right font-bold ${a.net_profit >= 0 ? 'text-green-400' : 'text-red-400'}">${formatCurrency(a.net_profit)}</td>
-      </tr>
-    `).join('');
-  } else {
-    tbody.innerHTML = '<tr><td colspan="8" class="p-8 text-center text-gray-400">暂无数据</td></tr>';
+  try {
+    // 构建查询参数
+    let url = `/api/reports/agent-performance?start_date=${startDate}&end_date=${endDate}`;
+    if (agentSearch) url += `&search=${encodeURIComponent(agentSearch)}`;
+    if (agentLevel) url += `&level=${agentLevel}`;
+    if (minBet) url += `&min_bet=${minBet}`;
+    if (sortBy) url += `&sort=${sortBy}`;
+    
+    const result = await api(url);
+    
+    if (!result.success) {
+      tbody.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-red-400">加载失败: ${result.error || '未知错误'}</td></tr>`;
+      return;
+    }
+    
+    let data = result.data || [];
+    
+    // 客户端额外过滤（如果需要）
+    if (minBet && parseFloat(minBet) > 0) {
+      data = data.filter(a => (a.total_bet || 0) >= parseFloat(minBet));
+    }
+    
+    // 客户端排序
+    const [sortField, sortOrder] = sortBy.split('_');
+    data.sort((a, b) => {
+      let aVal = 0, bVal = 0;
+      switch(sortField) {
+        case 'total': aVal = a.total_bet || 0; bVal = b.total_bet || 0; break;
+        case 'profit': aVal = a.company_profit || 0; bVal = b.company_profit || 0; break;
+        case 'commission': aVal = a.agent_commission || 0; bVal = b.agent_commission || 0; break;
+        case 'players': aVal = a.player_count || 0; bVal = b.player_count || 0; break;
+        default: aVal = a.total_bet || 0; bVal = b.total_bet || 0;
+      }
+      return sortOrder === 'desc' ? bVal - aVal : aVal - bVal;
+    });
+    
+    // 计算统计数据
+    const stats = data.reduce((acc, a) => {
+      acc.count++;
+      acc.players += a.player_count || 0;
+      acc.totalBet += a.total_bet || 0;
+      acc.profit += a.company_profit || 0;
+      acc.commission += a.agent_commission || 0;
+      acc.netProfit += a.net_profit || 0;
+      return acc;
+    }, { count: 0, players: 0, totalBet: 0, profit: 0, commission: 0, netProfit: 0 });
+    
+    // 更新统计卡片
+    const totalCount = document.getElementById('agent-total-count');
+    const totalPlayers = document.getElementById('agent-total-players');
+    const totalBet = document.getElementById('agent-total-bet');
+    const totalProfit = document.getElementById('agent-total-profit');
+    const totalCommission = document.getElementById('agent-total-commission');
+    const netProfit = document.getElementById('agent-net-profit');
+    
+    if (totalCount) totalCount.textContent = formatNumber(stats.count);
+    if (totalPlayers) totalPlayers.textContent = formatNumber(stats.players);
+    if (totalBet) totalBet.textContent = '¥' + formatCurrency(stats.totalBet);
+    if (totalProfit) {
+      totalProfit.textContent = (stats.profit >= 0 ? '+' : '') + '¥' + formatCurrency(stats.profit);
+      totalProfit.className = `text-lg font-bold ${stats.profit >= 0 ? 'text-green-400' : 'text-red-400'}`;
+    }
+    if (totalCommission) totalCommission.textContent = '¥' + formatCurrency(stats.commission);
+    if (netProfit) {
+      netProfit.textContent = (stats.netProfit >= 0 ? '+' : '') + '¥' + formatCurrency(stats.netProfit);
+      netProfit.className = `text-lg font-bold ${stats.netProfit >= 0 ? 'text-green-400' : 'text-red-400'}`;
+    }
+    
+    // 渲染表格
+    if (data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" class="p-8 text-center text-gray-400">暂无数据</td></tr>';
+      return;
+    }
+    
+    tbody.innerHTML = data.map(a => {
+      const levelText = a.level === 'shareholder' ? '股东' : 
+                        a.level === 'general_agent' ? '总代' : 
+                        a.tier ? `${a.tier}级代理` : '代理';
+      const levelClass = a.level === 'shareholder' ? 'bg-yellow-600' : 
+                         a.level === 'general_agent' ? 'bg-blue-600' : 
+                         'bg-gray-600';
+      
+      return `
+        <tr class="border-t border-gray-700 hover:bg-gray-750">
+          <td class="p-3">
+            <p class="font-medium text-white">${escapeHtml(a.agent_username)}</p>
+            <p class="text-xs text-gray-400">ID: ${a.agent_id || '-'} ${a.nickname ? '| ' + escapeHtml(a.nickname) : ''}</p>
+          </td>
+          <td class="p-3">
+            <span class="px-2 py-1 rounded text-xs ${levelClass}">${levelText}</span>
+          </td>
+          <td class="p-3 text-right font-mono">${formatNumber(a.downline_count || 0)}</td>
+          <td class="p-3 text-right font-mono">${formatNumber(a.player_count || 0)}</td>
+          <td class="p-3 text-right font-mono text-cyan-400">¥${formatCurrency(a.total_bet)}</td>
+          <td class="p-3 text-right font-mono ${a.company_profit >= 0 ? 'text-green-400' : 'text-red-400'}">
+            ${(a.company_profit >= 0 ? '+' : '')}¥${formatCurrency(a.company_profit)}
+          </td>
+          <td class="p-3 text-right font-mono text-yellow-400">¥${formatCurrency(a.agent_commission)}</td>
+          <td class="p-3 text-right font-mono font-bold ${a.net_profit >= 0 ? 'text-green-400' : 'text-red-400'}">
+            ${(a.net_profit >= 0 ? '+' : '')}¥${formatCurrency(a.net_profit)}
+          </td>
+        </tr>
+      `;
+    }).join('');
+    
+  } catch (error) {
+    tbody.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-red-400">加载失败: ${error.message}</td></tr>`;
+    showToast('加载代理业绩失败', 'error');
   }
 }
 
@@ -7559,6 +7723,38 @@ async function exportComprehensive() {
   if (gameType) url += `&game_type=${gameType}`;
   
   window.open(url, '_blank');
+}
+
+// 导出代理业绩
+function exportAgentPerformance() {
+  const startDate = document.getElementById('agent-start')?.value;
+  const endDate = document.getElementById('agent-end')?.value;
+  const agentSearch = document.getElementById('agent-search')?.value || '';
+  const agentLevel = document.getElementById('agent-level-filter')?.value || '';
+  const minBet = document.getElementById('agent-min-bet')?.value || '';
+  const sortBy = document.getElementById('agent-sort')?.value || '';
+  
+  let url = `/api/reports/export?type=agent-performance&start_date=${startDate}&end_date=${endDate}`;
+  if (agentSearch) url += `&search=${encodeURIComponent(agentSearch)}`;
+  if (agentLevel) url += `&level=${agentLevel}`;
+  if (minBet) url += `&min_bet=${minBet}`;
+  if (sortBy) url += `&sort=${sortBy}`;
+  
+  window.open(url, '_blank');
+  showToast('正在导出代理业绩报表...', 'info');
+}
+
+// 重置代理筛选器
+function resetAgentFilters() {
+  document.getElementById('agent-start').value = dayjs().subtract(30, 'day').format('YYYY-MM-DD');
+  document.getElementById('agent-end').value = dayjs().format('YYYY-MM-DD');
+  document.getElementById('agent-search').value = '';
+  document.getElementById('agent-level-filter').value = '';
+  document.getElementById('agent-min-bet').value = '';
+  document.getElementById('agent-sort').value = 'total_bet_desc';
+  
+  showToast('筛选条件已重置', 'success');
+  loadAgentPerformance();
 }
 
 function switchReportTab(tab) {

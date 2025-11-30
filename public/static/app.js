@@ -563,7 +563,7 @@ async function renderPlayers(container) {
           <option value="offline">离线</option>
         </select>
         <button onclick="searchPlayers()" class="bg-primary hover:bg-blue-700 px-4 py-2 rounded-lg"><i class="fas fa-search mr-2"></i>查询</button>
-        <button class="bg-gray-600 hover:bg-gray-500 px-4 py-2 rounded-lg ml-auto"><i class="fas fa-plus mr-2"></i>新增玩家</button>
+        <button onclick="showAddPlayerModal()" class="bg-gray-600 hover:bg-gray-500 px-4 py-2 rounded-lg ml-auto"><i class="fas fa-plus mr-2"></i>新增玩家</button>
       </div>
     </div>
     
@@ -12006,4 +12006,519 @@ function goToRiskAlerts() {
 // 过滤内容
 function filterContent(type) {
   loadModule('content');
+}
+
+// ========================================
+// 玩家详情弹窗功能
+// ========================================
+
+// 显示玩家详情
+async function viewPlayer(playerId) {
+  try {
+    const result = await api(`/api/players/${playerId}`);
+    if (!result.success) {
+      alert('加载玩家信息失败: ' + result.error);
+      return;
+    }
+    
+    const player = result.data;
+    showPlayerDetailModal(player);
+  } catch (error) {
+    console.error('Error loading player:', error);
+    alert('加载玩家信息失败');
+  }
+}
+
+// 显示玩家详情弹窗
+function showPlayerDetailModal(player) {
+  const modal = document.createElement('div');
+  modal.id = 'player-detail-modal';
+  modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4';
+  modal.onclick = (e) => { if (e.target === modal) closePlayerDetailModal(); };
+  
+  modal.innerHTML = `
+    <div class="bg-gray-800 rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
+      <!-- 标题栏 -->
+      <div class="bg-gradient-to-r from-gray-750 to-gray-800 px-6 py-4 border-b border-gray-700 flex items-center justify-between sticky top-0 z-10">
+        <h3 class="text-xl font-bold">
+          <i class="fas fa-user-circle text-primary mr-2"></i>玩家详情 - ${escapeHtml(player.username)}
+        </h3>
+        <button onclick="closePlayerDetailModal()" class="text-gray-400 hover:text-white transition-colors">
+          <i class="fas fa-times text-xl"></i>
+        </button>
+      </div>
+      
+      <!-- 功能按钮区 (红色区域) -->
+      <div class="px-6 py-4 border-b border-gray-700 bg-gray-750">
+        <div class="flex flex-wrap gap-2">
+          <button onclick="handlePlayerDeposit(${player.id})" class="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg text-sm font-medium transition-all shadow-lg">
+            <i class="fas fa-plus-circle mr-1.5"></i>存款
+          </button>
+          <button onclick="handlePlayerWithdraw(${player.id})" class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-sm font-medium transition-all shadow-lg">
+            <i class="fas fa-minus-circle mr-1.5"></i>提款
+          </button>
+          <button onclick="handlePlayerBalance(${player.id})" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg text-sm font-medium transition-all">
+            <i class="fas fa-wallet mr-1.5"></i>余额
+          </button>
+          <button onclick="handlePlayerTransfer(${player.id})" class="px-4 py-2 bg-orange-600 hover:bg-orange-700 rounded-lg text-sm font-medium transition-all shadow-lg">
+            <i class="fas fa-exchange-alt mr-1.5"></i>转账
+          </button>
+          <button onclick="showPlayerMoreActions(${player.id})" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg text-sm font-medium transition-all">
+            <i class="fas fa-ellipsis-h mr-1.5"></i>更多
+          </button>
+        </div>
+      </div>
+      
+      <!-- 内容区域 -->
+      <div class="p-6">
+        <div class="grid grid-cols-2 gap-6">
+          <!-- 左侧：基本信息 -->
+          <div>
+            <h4 class="text-lg font-semibold mb-4 text-primary"><i class="fas fa-id-card mr-2"></i>基本信息</h4>
+            <div class="space-y-3">
+              <div class="flex justify-between">
+                <span class="text-gray-400">用户ID:</span>
+                <span class="font-mono">${player.id}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-400">账号:</span>
+                <span class="font-medium">${escapeHtml(player.username)}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-400">昵称:</span>
+                <span>${escapeHtml(player.nickname || '-')}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-400">玩家姓名:</span>
+                <span>${escapeHtml(player.real_name || '-')}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-400">手机号:</span>
+                <span class="font-mono">${escapeHtml(player.phone || '-')}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-400">VIP等级:</span>
+                <span class="bg-purple-600 px-2 py-1 rounded text-xs font-medium">VIP ${player.vip_level || 0}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-400">代理:</span>
+                ${player.agent_id ? `<a href="javascript:void(0)" onclick="viewAgent(${player.agent_id})" class="text-blue-400 hover:text-blue-300 underline">${escapeHtml(player.agent_name || 'ID:' + player.agent_id)}</a>` : '<span class="text-gray-500">直属</span>'}
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-400">状态:</span>
+                ${getStatusBadge(player.status)}
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-400">KYC状态:</span>
+                ${player.kyc_status === 'verified' ? '<span class="text-green-400"><i class="fas fa-check-circle mr-1"></i>已验证</span>' : '<span class="text-yellow-400"><i class="fas fa-exclamation-circle mr-1"></i>未验证</span>'}
+              </div>
+            </div>
+          </div>
+          
+          <!-- 右侧：账户信息 -->
+          <div>
+            <h4 class="text-lg font-semibold mb-4 text-primary"><i class="fas fa-money-bill-wave mr-2"></i>账户信息</h4>
+            <div class="space-y-3">
+              <div class="flex justify-between">
+                <span class="text-gray-400">余额:</span>
+                <span class="font-mono text-green-400 font-bold text-lg">${formatCurrency(player.balance)}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-400">累计存款:</span>
+                <span class="font-mono">${formatCurrency(player.total_deposit || 0)}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-400">累计提款:</span>
+                <span class="font-mono">${formatCurrency(player.total_withdraw || 0)}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-400">累计投注:</span>
+                <span class="font-mono">${formatCurrency(player.total_bet || 0)}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-400">累计派彩:</span>
+                <span class="font-mono">${formatCurrency(player.total_payout || 0)}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-400">盈亏:</span>
+                <span class="font-mono ${(player.total_payout - player.total_bet) >= 0 ? 'text-red-400' : 'text-green-400'}">${formatCurrency((player.total_payout || 0) - (player.total_bet || 0))}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-400">风险等级:</span>
+                ${getRiskBadge(player.risk_level || 0)}
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-400">注册时间:</span>
+                <span class="text-sm">${player.created_at || '-'}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-400">最后登录:</span>
+                <span class="text-sm">${player.last_login || '-'}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 底部操作按钮 -->
+        <div class="mt-6 pt-6 border-t border-gray-700 flex justify-end gap-3">
+          <button onclick="editPlayer(${player.id})" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition-all">
+            <i class="fas fa-edit mr-1.5"></i>编辑资料
+          </button>
+          <button onclick="viewPlayerTransactions(${player.id})" class="px-5 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-sm font-medium transition-all">
+            <i class="fas fa-history mr-1.5"></i>交易记录
+          </button>
+          <button onclick="closePlayerDetailModal()" class="px-5 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg text-sm font-medium transition-all">
+            <i class="fas fa-times mr-1.5"></i>关闭
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+}
+
+// 关闭玩家详情弹窗
+function closePlayerDetailModal() {
+  const modal = document.getElementById('player-detail-modal');
+  if (modal) {
+    modal.remove();
+  }
+}
+
+// 处理存款
+function handlePlayerDeposit(playerId) {
+  closePlayerDetailModal();
+  loadModule('finance');
+  setTimeout(() => {
+    const depositTab = document.getElementById('tab-deposits');
+    if (depositTab) depositTab.click();
+    // TODO: 自动填充玩家ID
+  }, 300);
+}
+
+// 处理提款
+function handlePlayerWithdraw(playerId) {
+  closePlayerDetailModal();
+  loadModule('finance');
+  setTimeout(() => {
+    const withdrawTab = document.getElementById('tab-withdraws');
+    if (withdrawTab) withdrawTab.click();
+    // TODO: 自动填充玩家ID
+  }, 300);
+}
+
+// 查看余额详情
+async function handlePlayerBalance(playerId) {
+  try {
+    const result = await api(`/api/players/${playerId}/balance`);
+    if (result.success) {
+      alert(`当前余额: ${formatCurrency(result.data.balance)}\n冻结金额: ${formatCurrency(result.data.frozen || 0)}\n可用余额: ${formatCurrency(result.data.available)}`);
+    } else {
+      alert('获取余额失败: ' + result.error);
+    }
+  } catch (error) {
+    alert('获取余额失败');
+  }
+}
+
+// 处理转账
+function handlePlayerTransfer(playerId) {
+  closePlayerDetailModal();
+  loadModule('reports');
+  setTimeout(() => {
+    const transferTab = document.getElementById('tab-transfers');
+    if (transferTab) transferTab.click();
+    // TODO: 自动填充玩家ID
+  }, 300);
+}
+
+// 显示更多操作
+function showPlayerMoreActions(playerId) {
+  const actions = [
+    { icon: 'fa-user-shield', text: '设置风险等级', action: () => setPlayerRiskLevel(playerId) },
+    { icon: 'fa-star', text: '调整VIP等级', action: () => setPlayerVIPLevel(playerId) },
+    { icon: 'fa-lock', text: '冻结/解冻账户', action: () => togglePlayerStatus(playerId) },
+    { icon: 'fa-history', text: '查看操作日志', action: () => viewPlayerLogs(playerId) },
+    { icon: 'fa-comment', text: '发送站内信', action: () => sendPlayerMessage(playerId) },
+    { icon: 'fa-ban', text: '拉入黑名单', action: () => blockPlayer(playerId) }
+  ];
+  
+  const actionsHTML = actions.map(a => `
+    <button onclick="(${a.action})()" class="w-full text-left px-4 py-3 hover:bg-gray-700 transition-colors flex items-center">
+      <i class="fas ${a.icon} text-primary mr-3"></i>
+      <span>${a.text}</span>
+    </button>
+  `).join('');
+  
+  const modal = document.createElement('div');
+  modal.id = 'player-actions-modal';
+  modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[60]';
+  modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+  
+  modal.innerHTML = `
+    <div class="bg-gray-800 rounded-xl max-w-md w-full mx-4" onclick="event.stopPropagation()">
+      <div class="px-6 py-4 border-b border-gray-700 flex justify-between items-center">
+        <h3 class="text-lg font-semibold">更多操作</h3>
+        <button onclick="this.closest('#player-actions-modal').remove()" class="text-gray-400 hover:text-white">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="divide-y divide-gray-700">
+        ${actionsHTML}
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+}
+
+// 查看代理详情
+async function viewAgent(agentId) {
+  try {
+    const result = await api(`/api/agents/${agentId}`);
+    if (!result.success) {
+      alert('加载代理信息失败: ' + result.error);
+      return;
+    }
+    
+    const agent = result.data;
+    // 显示代理详情弹窗 (类似玩家详情)
+    showAgentDetailModal(agent);
+  } catch (error) {
+    console.error('Error loading agent:', error);
+    alert('加载代理信息失败');
+  }
+}
+
+// 显示代理详情弹窗
+function showAgentDetailModal(agent) {
+  const modal = document.createElement('div');
+  modal.id = 'agent-detail-modal';
+  modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4';
+  modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+  
+  modal.innerHTML = `
+    <div class="bg-gray-800 rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
+      <div class="bg-gradient-to-r from-gray-750 to-gray-800 px-6 py-4 border-b border-gray-700 flex items-center justify-between sticky top-0 z-10">
+        <h3 class="text-xl font-bold">
+          <i class="fas fa-user-tie text-primary mr-2"></i>代理详情 - ${escapeHtml(agent.username)}
+        </h3>
+        <button onclick="this.closest('#agent-detail-modal').remove()" class="text-gray-400 hover:text-white transition-colors">
+          <i class="fas fa-times text-xl"></i>
+        </button>
+      </div>
+      
+      <div class="p-6">
+        <div class="grid grid-cols-2 gap-6">
+          <div>
+            <h4 class="text-lg font-semibold mb-4 text-primary"><i class="fas fa-id-card mr-2"></i>基本信息</h4>
+            <div class="space-y-3">
+              <div class="flex justify-between">
+                <span class="text-gray-400">代理ID:</span>
+                <span class="font-mono">${agent.id}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-400">账号:</span>
+                <span class="font-medium">${escapeHtml(agent.username)}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-400">代理等级:</span>
+                <span class="bg-blue-600 px-2 py-1 rounded text-xs">Level ${agent.level || 1}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-400">上级代理:</span>
+                ${agent.parent_id ? `<a href="javascript:void(0)" onclick="viewAgent(${agent.parent_id})" class="text-blue-400 hover:text-blue-300 underline">${escapeHtml(agent.parent_name || 'ID:' + agent.parent_id)}</a>` : '<span class="text-gray-500">顶级代理</span>'}
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-400">下级人数:</span>
+                <span class="font-bold text-green-400">${agent.sub_count || 0}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-400">玩家人数:</span>
+                <span class="font-bold text-blue-400">${agent.player_count || 0}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-400">状态:</span>
+                ${getStatusBadge(agent.status)}
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-400">注册时间:</span>
+                <span class="text-sm">${agent.created_at || '-'}</span>
+              </div>
+            </div>
+          </div>
+          
+          <div>
+            <h4 class="text-lg font-semibold mb-4 text-primary"><i class="fas fa-chart-line mr-2"></i>业绩信息</h4>
+            <div class="space-y-3">
+              <div class="flex justify-between">
+                <span class="text-gray-400">总投注:</span>
+                <span class="font-mono">${formatCurrency(agent.total_bet || 0)}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-400">总派彩:</span>
+                <span class="font-mono">${formatCurrency(agent.total_payout || 0)}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-400">公司盈亏:</span>
+                <span class="font-mono ${((agent.total_bet || 0) - (agent.total_payout || 0)) >= 0 ? 'text-green-400' : 'text-red-400'}">${formatCurrency((agent.total_bet || 0) - (agent.total_payout || 0))}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-400">佣金比例:</span>
+                <span class="font-bold text-yellow-400">${(agent.commission_rate || 0) * 100}%</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-400">累计佣金:</span>
+                <span class="font-mono text-orange-400">${formatCurrency(agent.total_commission || 0)}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-400">本月业绩:</span>
+                <span class="font-mono">${formatCurrency(agent.month_performance || 0)}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="mt-6 pt-6 border-t border-gray-700 flex justify-end gap-3">
+          <button onclick="editAgent(${agent.id})" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition-all">
+            <i class="fas fa-edit mr-1.5"></i>编辑资料
+          </button>
+          <button onclick="viewAgentPerformance(${agent.id})" class="px-5 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-sm font-medium transition-all">
+            <i class="fas fa-chart-bar mr-1.5"></i>查看业绩
+          </button>
+          <button onclick="this.closest('#agent-detail-modal').remove()" class="px-5 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg text-sm font-medium transition-all">
+            <i class="fas fa-times mr-1.5"></i>关闭
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+}
+
+// 新增玩家功能
+function showAddPlayerModal() {
+  const modal = document.createElement('div');
+  modal.id = 'add-player-modal';
+  modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4';
+  modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+  
+  modal.innerHTML = `
+    <div class="bg-gray-800 rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
+      <div class="bg-gradient-to-r from-gray-750 to-gray-800 px-6 py-4 border-b border-gray-700 flex items-center justify-between sticky top-0 z-10">
+        <h3 class="text-xl font-bold">
+          <i class="fas fa-user-plus text-primary mr-2"></i>新增玩家
+        </h3>
+        <button onclick="this.closest('#add-player-modal').remove()" class="text-gray-400 hover:text-white transition-colors">
+          <i class="fas fa-times text-xl"></i>
+        </button>
+      </div>
+      
+      <form id="add-player-form" class="p-6 space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-gray-300 text-sm mb-2">用户名 <span class="text-red-400">*</span></label>
+            <input type="text" name="username" required class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 focus:border-primary focus:outline-none" placeholder="6-20位字母数字">
+          </div>
+          <div>
+            <label class="block text-gray-300 text-sm mb-2">密码 <span class="text-red-400">*</span></label>
+            <input type="password" name="password" required class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 focus:border-primary focus:outline-none" placeholder="6-20位">
+          </div>
+          <div>
+            <label class="block text-gray-300 text-sm mb-2">昵称</label>
+            <input type="text" name="nickname" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 focus:border-primary focus:outline-none" placeholder="可选">
+          </div>
+          <div>
+            <label class="block text-gray-300 text-sm mb-2">真实姓名</label>
+            <input type="text" name="real_name" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 focus:border-primary focus:outline-none" placeholder="可选">
+          </div>
+          <div>
+            <label class="block text-gray-300 text-sm mb-2">手机号</label>
+            <input type="tel" name="phone" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 focus:border-primary focus:outline-none" placeholder="可选">
+          </div>
+          <div>
+            <label class="block text-gray-300 text-sm mb-2">邮箱</label>
+            <input type="email" name="email" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 focus:border-primary focus:outline-none" placeholder="可选">
+          </div>
+          <div>
+            <label class="block text-gray-300 text-sm mb-2">所属代理</label>
+            <select name="agent_id" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 focus:border-primary focus:outline-none">
+              <option value="">直属</option>
+              <!-- 代理列表将动态加载 -->
+            </select>
+          </div>
+          <div>
+            <label class="block text-gray-300 text-sm mb-2">VIP等级</label>
+            <select name="vip_level" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 focus:border-primary focus:outline-none">
+              <option value="0">VIP 0</option>
+              <option value="1">VIP 1</option>
+              <option value="2">VIP 2</option>
+              <option value="3">VIP 3</option>
+              <option value="4">VIP 4</option>
+              <option value="5">VIP 5</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="pt-4 border-t border-gray-700 flex justify-end gap-3">
+          <button type="button" onclick="this.closest('#add-player-modal').remove()" class="px-5 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg text-sm font-medium transition-all">
+            <i class="fas fa-times mr-1.5"></i>取消
+          </button>
+          <button type="submit" class="px-5 py-2 bg-primary hover:bg-blue-700 rounded-lg text-sm font-medium transition-all">
+            <i class="fas fa-check mr-1.5"></i>确认创建
+          </button>
+        </div>
+      </form>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  
+  // 绑定表单提交事件
+  document.getElementById('add-player-form').onsubmit = async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData);
+    
+    try {
+      const result = await api('/api/players', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      
+      if (result.success) {
+        alert('创建玩家成功！');
+        modal.remove();
+        searchPlayers(); // 刷新玩家列表
+      } else {
+        alert('创建失败: ' + result.error);
+      }
+    } catch (error) {
+      alert('创建失败，请稍后重试');
+    }
+  };
+  
+  // 加载代理列表
+  loadAgentsForSelect();
+}
+
+// 加载代理列表到下拉框
+async function loadAgentsForSelect() {
+  try {
+    const result = await api('/api/agents');
+    if (result.success && result.data) {
+      const select = document.querySelector('#add-player-form select[name="agent_id"]');
+      if (select) {
+        const options = result.data.map(agent => 
+          `<option value="${agent.id}">${escapeHtml(agent.username)} (Level ${agent.level})</option>`
+        ).join('');
+        select.innerHTML = '<option value="">直属</option>' + options;
+      }
+    }
+  } catch (error) {
+    console.error('Error loading agents:', error);
+  }
 }

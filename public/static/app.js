@@ -524,7 +524,7 @@ async function renderPlayers(container) {
     </div>
     
     <!-- 玩家管理 -->
-    <div id="player-list">`
+    <div id="player-list">
     <!-- 在线统计卡片 -->
     <div class="grid grid-cols-3 gap-4 mb-6">
       <div class="bg-gray-800 rounded-xl p-4 flex items-center">

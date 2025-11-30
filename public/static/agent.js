@@ -599,7 +599,7 @@ async function loadAgents(page = 1) {
       tbody.innerHTML = data.list.map(item => `
         <tr class="border-t border-gray-700 hover:bg-gray-750">
           <td class="px-6 py-4">
-            <div class="font-medium">${escapeHtml(item.username)}</div>
+            <div class="font-medium">${makeAccountClickable(item.username, item.id, 'agent')}</div>
             <div class="text-sm text-gray-400">${escapeHtml(item.phone || '-')}</div>
           </td>
           <td class="px-6 py-4">${escapeHtml(item.real_name || '-')}</td>
@@ -669,7 +669,7 @@ async function loadPlayers(page = 1) {
       tbody.innerHTML = data.list.map(item => `
         <tr class="border-t border-gray-700 hover:bg-gray-750">
           <td class="px-6 py-4">
-            <div class="font-medium">${escapeHtml(item.username)}</div>
+            <div class="font-medium">${makeAccountClickable(item.username, item.id, 'player')}</div>
             <div class="text-sm text-gray-400">${escapeHtml(item.phone || '-')}</div>
           </td>
           <td class="px-6 py-4">${escapeHtml(item.real_name || '-')}</td>

@@ -8041,6 +8041,80 @@ app.get('/agent.html', (c) => {
 </html>`)
 })
 
+// ========================================
+// 游戏报表 API
+// ========================================
+app.get('/api/agent/game-report', async (c) => {
+  const db = c.env.DB
+  const page = parseInt(c.req.query('page') || '1')
+  const pageSize = 20
+  
+  const startDate = c.req.query('start_date') || ''
+  const endDate = c.req.query('end_date') || ''
+  const search = c.req.query('search') || ''
+  const gameType = c.req.query('game_type') || ''
+  
+  try {
+    // 模拟游戏报表数据
+    const mockData = {
+      summary: {
+        totalBet: 2850000,
+        validBet: 2707500,
+        totalWinLoss: -385000,
+        totalCount: 1245
+      },
+      list: [
+        {
+          game_id: 'G20241130001',
+          player_id: 11,
+          player_username: 'vip_player01',
+          player_name: '高级玩家01',
+          game_type: 'baccarat',
+          game_type_display: '百家乐',
+          bet_amount: 50000,
+          valid_bet: 47500,
+          win_loss: -8500,
+          wash_code_fee: 950,
+          bet_time: '2024-11-30 14:35:22'
+        },
+        {
+          game_id: 'G20241130002',
+          player_id: 12,
+          player_username: 'vip_player02',
+          player_name: '高级玩家02',
+          game_type: 'roulette',
+          game_type_display: '轮盘',
+          bet_amount: 30000,
+          valid_bet: 28500,
+          win_loss: 12000,
+          wash_code_fee: 570,
+          bet_time: '2024-11-30 14:28:15'
+        },
+        {
+          game_id: 'G20241130003',
+          player_id: 13,
+          player_username: 'whale_001',
+          player_name: '大客户001',
+          game_type: 'baccarat',
+          game_type_display: '百家乐',
+          bet_amount: 100000,
+          valid_bet: 95000,
+          win_loss: -25000,
+          wash_code_fee: 1900,
+          bet_time: '2024-11-30 14:15:43'
+        }
+      ],
+      total: 1245,
+      currentPage: page,
+      totalPages: Math.ceil(1245 / pageSize)
+    }
+    
+    return c.json({ success: true, data: mockData })
+  } catch (error) {
+    return c.json({ success: false, error: String(error) }, 500)
+  }
+})
+
 app.get('*', (c) => {
   return c.html(`
 <!DOCTYPE html>

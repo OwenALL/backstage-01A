@@ -2069,6 +2069,8 @@ function renderCommission() {
               <th class="px-6 py-4 text-left text-sm font-semibold">对象类型</th>
               <th class="px-6 py-4 text-left text-sm font-semibold">有效投注</th>
               <th class="px-6 py-4 text-left text-sm font-semibold">输赢金额</th>
+              <th class="px-6 py-4 text-left text-sm font-semibold">洗码率%</th>
+              <th class="px-6 py-4 text-left text-sm font-semibold">洗码费</th>
               <th class="px-6 py-4 text-left text-sm font-semibold">占成比例</th>
               <th class="px-6 py-4 text-left text-sm font-semibold">佣金金额</th>
               <th class="px-6 py-4 text-left text-sm font-semibold">状态</th>
@@ -2077,7 +2079,7 @@ function renderCommission() {
           </thead>
           <tbody id="commission-table-body">
             <tr>
-              <td colspan="9" class="px-6 py-12 text-center text-gray-400">
+              <td colspan="11" class="px-6 py-12 text-center text-gray-400">
                 <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
                 <div>加载中...</div>
               </td>
@@ -2275,7 +2277,7 @@ async function loadCommission(page = 1) {
       if (data.list.length === 0) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="9" class="px-6 py-12 text-center text-gray-400">
+            <td colspan="11" class="px-6 py-12 text-center text-gray-400">
               <i class="fas fa-inbox text-4xl mb-2"></i>
               <div>暂无数据</div>
             </td>
@@ -2299,9 +2301,11 @@ async function loadCommission(page = 1) {
           <td class="px-6 py-4 text-blue-400">¥${formatMoney(item.valid_bet)}</td>
           <td class="px-6 py-4">
             <span class="${item.profit >= 0 ? 'text-green-400' : 'text-red-400'}">
-              ¥${formatMoney(Math.abs(item.profit))}
+              ${item.profit >= 0 ? '+' : '-'}¥${formatMoney(Math.abs(item.profit))}
             </span>
           </td>
+          <td class="px-6 py-4 text-orange-400">${item.wash_code_rate}%</td>
+          <td class="px-6 py-4 text-orange-400">¥${formatMoney(item.wash_code_fee)}</td>
           <td class="px-6 py-4 text-purple-400">${item.share_ratio}%</td>
           <td class="px-6 py-4 text-green-400 font-bold">¥${formatMoney(item.commission_amount)}</td>
           <td class="px-6 py-4">

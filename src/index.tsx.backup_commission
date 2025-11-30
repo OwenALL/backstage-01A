@@ -7260,11 +7260,9 @@ app.get('/api/agent/commission', async (c) => {
           target_name: '代理李四',
           target_type: 'agent',
           valid_bet: 520000,
-          profit: 85000, // 输赢金额（平台赢85000）
-          wash_code_rate: 2.0, // 洗码率 2%
-          wash_code_fee: 10400, // 洗码费 = 520000 * 2% = 10400
-          share_ratio: 30, // 占成比例 30%
-          commission_amount: 22380, // 佣金 = (85000 - 10400) * 30% = 22380
+          profit: 85000,
+          share_ratio: 30,
+          commission_amount: 25500,
           status: 'settled'
         },
         {
@@ -7275,56 +7273,9 @@ app.get('/api/agent/commission', async (c) => {
           target_name: '玩家张三',
           target_type: 'player',
           valid_bet: 110000,
-          profit: -15000, // 输赢金额（平台输15000，玩家赢）
-          wash_code_rate: 2.5, // 洗码率 2.5%
-          wash_code_fee: 2750, // 洗码费 = 110000 * 2.5% = 2750
-          share_ratio: 50, // 占成比例 50%
-          commission_amount: -8875, // 佣金 = (-15000 - 2750) * 50% = -8875（玩家赢了，代理亏损）
-          status: 'pending'
-        },
-        {
-          id: 3,
-          date: '2024-11-28',
-          target_id: 3,
-          target_username: 'agent02',
-          target_name: '代理李四',
-          target_type: 'agent',
-          valid_bet: 380000,
-          profit: 52000,
-          wash_code_rate: 2.0,
-          wash_code_fee: 7600,
-          share_ratio: 30,
-          commission_amount: 13320,
-          status: 'settled'
-        },
-        {
-          id: 4,
-          date: '2024-11-28',
-          target_id: 12,
-          target_username: 'vip_player02',
-          target_name: '玩家李四',
-          target_type: 'player',
-          valid_bet: 95000,
-          profit: 18500,
-          wash_code_rate: 2.5,
-          wash_code_fee: 2375,
+          profit: -15000,
           share_ratio: 50,
-          commission_amount: 8062.5,
-          status: 'settled'
-        },
-        {
-          id: 5,
-          date: '2024-11-27',
-          target_id: 13,
-          target_username: 'whale_001',
-          target_name: '大客户王五',
-          target_type: 'player',
-          valid_bet: 850000,
-          profit: -125000,
-          wash_code_rate: 3.0,
-          wash_code_fee: 25500,
-          share_ratio: 40,
-          commission_amount: -60200,
+          commission_amount: 7500,
           status: 'pending'
         }
       ],
@@ -8777,11 +8728,9 @@ app.get('/api/agent/commission', async (c) => {
           target_name: '代理李四',
           target_type: 'agent',
           valid_bet: 520000,
-          profit: 85000, // 输赢金额（平台赢85000）
-          wash_code_rate: 2.0, // 洗码率 2%
-          wash_code_fee: 10400, // 洗码费 = 520000 * 2% = 10400
-          share_ratio: 30, // 占成比例 30%
-          commission_amount: 22380, // 佣金 = (85000 - 10400) * 30% = 22380
+          profit: 85000,
+          share_ratio: 30,
+          commission_amount: 25500,
           status: 'settled'
         },
         {
@@ -8792,56 +8741,9 @@ app.get('/api/agent/commission', async (c) => {
           target_name: '玩家张三',
           target_type: 'player',
           valid_bet: 110000,
-          profit: -15000, // 输赢金额（平台输15000，玩家赢）
-          wash_code_rate: 2.5, // 洗码率 2.5%
-          wash_code_fee: 2750, // 洗码费 = 110000 * 2.5% = 2750
-          share_ratio: 50, // 占成比例 50%
-          commission_amount: -8875, // 佣金 = (-15000 - 2750) * 50% = -8875（玩家赢了，代理亏损）
-          status: 'pending'
-        },
-        {
-          id: 3,
-          date: '2024-11-28',
-          target_id: 3,
-          target_username: 'agent02',
-          target_name: '代理李四',
-          target_type: 'agent',
-          valid_bet: 380000,
-          profit: 52000,
-          wash_code_rate: 2.0,
-          wash_code_fee: 7600,
-          share_ratio: 30,
-          commission_amount: 13320,
-          status: 'settled'
-        },
-        {
-          id: 4,
-          date: '2024-11-28',
-          target_id: 12,
-          target_username: 'vip_player02',
-          target_name: '玩家李四',
-          target_type: 'player',
-          valid_bet: 95000,
-          profit: 18500,
-          wash_code_rate: 2.5,
-          wash_code_fee: 2375,
+          profit: -15000,
           share_ratio: 50,
-          commission_amount: 8062.5,
-          status: 'settled'
-        },
-        {
-          id: 5,
-          date: '2024-11-27',
-          target_id: 13,
-          target_username: 'whale_001',
-          target_name: '大客户王五',
-          target_type: 'player',
-          valid_bet: 850000,
-          profit: -125000,
-          wash_code_rate: 3.0,
-          wash_code_fee: 25500,
-          share_ratio: 40,
-          commission_amount: -60200,
+          commission_amount: 7500,
           status: 'pending'
         }
       ],

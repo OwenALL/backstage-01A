@@ -128,6 +128,43 @@ const getRiskLevelText = (level) => {
   return map[level] || level || 'normal';
 };
 
+// Toast提示函数
+const showToast = (message, type = 'info') => {
+  const colors = {
+    success: 'bg-green-600',
+    error: 'bg-red-600',
+    warning: 'bg-yellow-600',
+    info: 'bg-blue-600'
+  };
+  const icons = {
+    success: 'fa-check-circle',
+    error: 'fa-times-circle',
+    warning: 'fa-exclamation-triangle',
+    info: 'fa-info-circle'
+  };
+  
+  const toast = document.createElement('div');
+  toast.className = `fixed top-4 right-4 ${colors[type] || colors.info} text-white px-6 py-3 rounded-lg shadow-lg z-[200] flex items-center space-x-3 animate-slide-in`;
+  toast.innerHTML = `
+    <i class="fas ${icons[type] || icons.info}"></i>
+    <span>${escapeHtml(message)}</span>
+  `;
+  
+  document.body.appendChild(toast);
+  
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateX(100%)';
+    toast.style.transition = 'all 0.3s ease-in-out';
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+};
+
+// 成功提示的简写
+const showSuccess = (message) => showToast(message, 'success');
+const showError = (message) => showToast(message, 'error');
+const showWarning = (message) => showToast(message, 'warning');
+
 const getRiskBadge = (level) => {
   const map = {
     normal: { class: 'bg-green-600', text: '正常' },
@@ -2556,6 +2593,10 @@ async function renderFinance(container) {
                 <i class="fas fa-check-circle text-green-400 mr-2"></i>
                 <span>存款审核通过</span>
               </div>
+              <div class="flex items-center">
+                <i class="fas fa-check-circle text-green-400 mr-2"></i>
+                <span>洗码结算审批</span>
+              </div>
               <div class="mt-4 pt-4 border-t border-gray-600">
                 <p class="text-xs text-gray-400">
                   <i class="fas fa-info-circle mr-1"></i>
@@ -2659,6 +2700,8 @@ function switchFinanceTab(tab) {
   // 加载对应数据
   if (tab === 'transfer-fee') {
     loadTransferFeeConfigs();
+  } else if (tab === 'finance-password') {
+    loadFinancePasswordConfig();
   }
 }
 

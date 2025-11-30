@@ -7010,6 +7010,134 @@ app.get('/api/game-rooms', async (c) => {
 })
 
 // ========================================
+// 财务密码管理 API
+// ========================================
+
+// 财务密码配置存储（内存存储，生产环境应使用数据库）
+const financePasswordConfig = {
+  passwords: [
+    { slot: 1, name: '', password: '', is_set: false },
+    { slot: 2, name: '', password: '', is_set: false },
+    { slot: 3, name: '', password: '', is_set: false }
+  ],
+  required_count: 1
+}
+
+// 获取财务密码配置
+app.get('/api/finance-password/config', async (c) => {
+  try {
+    return c.json({
+      success: true,
+      data: {
+        passwords: financePasswordConfig.passwords.map(p => ({
+          slot: p.slot,
+          name: p.name,
+          is_set: p.is_set
+        })),
+        required_count: financePasswordConfig.required_count
+      }
+    })
+  } catch (error) {
+    return c.json({ success: false, error: String(error) }, 500)
+  }
+})
+
+// 设置财务密码
+app.post('/api/finance-password/set', async (c) => {
+  try {
+    const { slot, name, password } = await c.req.json()
+    
+    if (!slot || slot < 1 || slot > 3) {
+      return c.json({ success: false, error: '无效的密码槽位' }, 400)
+    }
+    
+    if (!name || !password) {
+      return c.json({ success: false, error: '密码名称和密码值不能为空' }, 400)
+    }
+    
+    if (password.length < 6 || password.length > 20) {
+      return c.json({ success: false, error: '密码长度必须为 6-20 位' }, 400)
+    }
+    
+    if (!/^[a-zA-Z0-9]+$/.test(password)) {
+      return c.json({ success: false, error: '密码只能包含数字和字母' }, 400)
+    }
+    
+    // 更新配置
+    const pwdIndex = financePasswordConfig.passwords.findIndex(p => p.slot === slot)
+    if (pwdIndex !== -1) {
+      financePasswordConfig.passwords[pwdIndex] = {
+        slot,
+        name,
+        password, // 生产环境应该加密存储
+        is_set: true
+      }
+    }
+    
+    return c.json({ success: true, message: '财务密码设置成功' })
+  } catch (error) {
+    return c.json({ success: false, error: String(error) }, 500)
+  }
+})
+
+// 保存验证规则
+app.post('/api/finance-password/rule', async (c) => {
+  try {
+    const { required_count } = await c.req.json()
+    
+    if (!required_count || required_count < 1 || required_count > 3) {
+      return c.json({ success: false, error: '验证规则必须是 1-3' }, 400)
+    }
+    
+    financePasswordConfig.required_count = required_count
+    
+    return c.json({ success: true, message: '验证规则保存成功' })
+  } catch (error) {
+    return c.json({ success: false, error: String(error) }, 500)
+  }
+})
+
+// 验证财务密码
+app.post('/api/finance-password/verify', async (c) => {
+  try {
+    const { passwords, operation, amount } = await c.req.json()
+    
+    if (!passwords || !Array.isArray(passwords)) {
+      return c.json({ success: false, error: '无效的密码数据' }, 400)
+    }
+    
+    // 验证每个密码
+    for (const pwd of passwords) {
+      const configPwd = financePasswordConfig.passwords.find(p => p.slot === pwd.slot)
+      
+      if (!configPwd || !configPwd.is_set) {
+        return c.json({ success: false, error: `密码 #${pwd.slot} 未设置` }, 400)
+      }
+      
+      if (configPwd.password !== pwd.password) {
+        return c.json({ success: false, error: `${configPwd.name} 密码错误` }, 400)
+      }
+    }
+    
+    // 验证密码数量是否符合要求
+    if (passwords.length < financePasswordConfig.required_count) {
+      return c.json({ 
+        success: false, 
+        error: `需要输入 ${financePasswordConfig.required_count} 个密码` 
+      }, 400)
+    }
+    
+    return c.json({ 
+      success: true, 
+      data: { verified: true },
+      message: '密码验证成功'
+    })
+  } catch (error) {
+    return c.json({ success: false, error: String(error) }, 500)
+  }
+})
+
+// ========================================
 // 前端页面
 // ========================================
 app.get('*', (c) => {

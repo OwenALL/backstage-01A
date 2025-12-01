@@ -16,20 +16,20 @@
 ## 🌐 在线演示地址
 
 ### 系统总管理后台
-- **永久访问**: `https://webapp.pages.dev/` （部署后生效）
+- **✅ 生产环境**: https://webapp-eqp.pages.dev/
 - **沙箱演示**: https://3000-iuwuqi7rz0v5niuhr74wf-cc2fbc16.sandbox.novita.ai/
 - **管理员账号**: `admin`
 - **管理员密码**: `admin123`
 - ⚠️ **生产环境请立即修改密码！**
 
 ### 代理管理后台
-- **永久访问**: `https://webapp.pages.dev/agent.html` （部署后生效）
+- **✅ 生产环境**: https://webapp-eqp.pages.dev/agent.html
 - **沙箱演示**: https://3000-iuwuqi7rz0v5niuhr74wf-cc2fbc16.sandbox.novita.ai/agent.html
 - **股东账号**: `shareholder01` / `test123`
 - **代理账号**: `agent01` / `test123`
 - ⚠️ **生产环境请立即修改密码！**
 
-> 💡 **部署说明**: 永久地址需要部署到Cloudflare Pages后生效。详细部署步骤请查看 [PRODUCTION_DEPLOY.md](./PRODUCTION_DEPLOY.md)
+> 🎉 **已部署**: 生产环境已成功部署到Cloudflare Pages，立即可用！
 
 ---
 

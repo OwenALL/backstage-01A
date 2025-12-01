@@ -32,3 +32,6 @@ Thumbs.db
 # Temporary
 *.tmp
 *.temp
+
+# 生产环境访问信息 (本地敏感文档)
+.production-access.md

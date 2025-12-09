@@ -3433,12 +3433,110 @@ app.post('/api/risk/limit-groups', async (c) => {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `).bind(
       body.group_name, body.description,
-      JSON.stringify(body.baccarat_limits), JSON.stringify(body.dragon_tiger_limits),
-      JSON.stringify(body.roulette_limits), JSON.stringify(body.sicbo_limits),
-      JSON.stringify(body.niuniu_limits), body.status || 1
+      body.baccarat_limits, body.dragon_tiger_limits,
+      body.roulette_limits, body.sicbo_limits,
+      body.niuniu_limits, body.status || 1
     ).run()
     
     return c.json({ success: true, data: { id: result.meta.last_row_id }, message: '限红组创建成功' })
+  } catch (error) {
+    return c.json({ success: false, error: String(error) }, 500)
+  }
+})
+
+// 获取单个限红组详情
+app.get('/api/risk/limit-groups/:id', async (c) => {
+  const db = c.env.DB
+  const id = c.req.param('id')
+  
+  try {
+    const group = await db.prepare(`
+      SELECT lg.*,
+             (SELECT COUNT(*) FROM players WHERE limit_group_id = lg.id) as player_count,
+             (SELECT COUNT(*) FROM game_tables WHERE limit_group_id = lg.id) as table_count
+      FROM limit_groups lg WHERE lg.id = ?
+    `).bind(id).first()
+    
+    if (!group) {
+      return c.json({ success: false, error: '限红组不存在' }, 404)
+    }
+    
+    return c.json({ success: true, data: group })
+  } catch (error) {
+    return c.json({ success: false, error: String(error) }, 500)
+  }
+})
+
+// 更新限红组
+app.put('/api/risk/limit-groups/:id', async (c) => {
+  const db = c.env.DB
+  const id = c.req.param('id')
+  const body = await c.req.json()
+  
+  try {
+    const result = await db.prepare(`
+      UPDATE limit_groups SET
+        group_name = ?,
+        description = ?,
+        baccarat_limits = ?,
+        dragon_tiger_limits = ?,
+        roulette_limits = ?,
+        sicbo_limits = ?,
+        niuniu_limits = ?,
+        status = ?,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `).bind(
+      body.group_name || null,
+      body.description || null,
+      body.baccarat_limits || null,
+      body.dragon_tiger_limits || null,
+      body.roulette_limits || null,
+      body.sicbo_limits || null,
+      body.niuniu_limits || null,
+      body.status !== undefined ? body.status : null,
+      id
+    ).run()
+    
+    if (result.meta.changes === 0) {
+      return c.json({ success: false, error: '限红组不存在或无变更' }, 404)
+    }
+    
+    return c.json({ success: true, message: '限红组更新成功' })
+  } catch (error) {
+    return c.json({ success: false, error: String(error) }, 500)
+  }
+})
+
+// 删除限红组
+app.delete('/api/risk/limit-groups/:id', async (c) => {
+  const db = c.env.DB
+  const id = c.req.param('id')
+  
+  try {
+    // 检查是否有玩家或桌台使用此限红组
+    const usage = await db.prepare(`
+      SELECT 
+        (SELECT COUNT(*) FROM players WHERE limit_group_id = ?) as player_count,
+        (SELECT COUNT(*) FROM game_tables WHERE limit_group_id = ?) as table_count
+    `).bind(id, id).first()
+    
+    if (usage && (usage.player_count > 0 || usage.table_count > 0)) {
+      return c.json({ 
+        success: false, 
+        error: `无法删除：此限红组正被 ${usage.player_count} 个玩家和 ${usage.table_count} 个桌台使用` 
+      }, 400)
+    }
+    
+    const result = await db.prepare(`
+      DELETE FROM limit_groups WHERE id = ?
+    `).bind(id).run()
+    
+    if (result.meta.changes === 0) {
+      return c.json({ success: false, error: '限红组不存在' }, 404)
+    }
+    
+    return c.json({ success: true, message: '限红组已删除' })
   } catch (error) {
     return c.json({ success: false, error: String(error) }, 500)
   }

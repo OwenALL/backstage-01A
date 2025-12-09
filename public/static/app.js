@@ -6483,28 +6483,99 @@ async function renderRisk(container) {
     
     <!-- 限红配置 -->
     <div id="risk-limits" class="hidden">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <!-- 操作按钮栏 -->
+      <div class="flex justify-between items-center mb-6">
+        <div>
+          <h3 class="text-xl font-bold"><i class="fas fa-dollar-sign text-green-400 mr-2"></i>限红配置管理</h3>
+          <p class="text-sm text-gray-400 mt-1">设置不同游戏的投注限额，控制风险敞口</p>
+        </div>
+        <button onclick="showAddLimitGroupModal()" class="bg-primary hover:bg-blue-700 px-4 py-2 rounded-lg text-sm">
+          <i class="fas fa-plus mr-1"></i>新增限红组
+        </button>
+      </div>
+      
+      <!-- 限红组列表 -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         ${limitGroups.map(g => {
-          const limits = JSON.parse(g.limits || '{}');
+          // 解析各游戏限额
+          const baccaratLimits = JSON.parse(g.baccarat_limits || '{"min":10,"max":50000}');
+          const dragonTigerLimits = JSON.parse(g.dragon_tiger_limits || '{"min":10,"max":30000}');
+          const rouletteLimits = JSON.parse(g.roulette_limits || '{"min":5,"max":20000}');
+          const sicboLimits = JSON.parse(g.sicbo_limits || '{"min":5,"max":10000}');
+          const niuniuLimits = JSON.parse(g.niuniu_limits || '{"min":10,"max":20000}');
+          
           return `
-            <div class="bg-gray-800 rounded-xl p-5">
+            <div class="bg-gray-800 rounded-xl p-5 ${g.status === 1 ? '' : 'opacity-60'}">
               <div class="flex justify-between items-start mb-4">
-                <h4 class="font-semibold">${g.name}</h4>
-                ${getStatusBadge(g.status)}
-              </div>
-              <p class="text-sm text-gray-400 mb-4">${g.description || ''}</p>
-              <div class="space-y-2 text-sm">
-                ${Object.entries(limits).map(([game, l]) => `
-                  <div class="flex justify-between items-center p-2 bg-gray-700 rounded">
-                    <span>${getGameTypeName(game)}</span>
-                    <span class="font-mono">${formatNumber(l.min)} - ${formatNumber(l.max)}</span>
+                <div class="flex items-center">
+                  <span class="w-3 h-3 rounded-full ${g.status === 1 ? 'bg-green-500' : 'bg-gray-500'} mr-3"></span>
+                  <div>
+                    <h4 class="font-semibold text-lg">${escapeHtml(g.group_name)}</h4>
+                    <p class="text-xs text-gray-400">${escapeHtml(g.description || '无描述')}</p>
                   </div>
-                `).join('')}
+                </div>
+                <div class="flex items-center space-x-2">
+                  <button onclick="editLimitGroup(${g.id})" class="text-blue-400 hover:text-blue-300 p-1" title="编辑">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button onclick="toggleLimitGroup(${g.id}, ${g.status === 1 ? 0 : 1})" class="text-yellow-400 hover:text-yellow-300 p-1" title="${g.status === 1 ? '禁用' : '启用'}">
+                    <i class="fas fa-${g.status === 1 ? 'pause' : 'play'}"></i>
+                  </button>
+                  <button onclick="deleteLimitGroup(${g.id}, '${escapeJs(g.group_name)}')" class="text-red-400 hover:text-red-300 p-1" title="删除">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
               </div>
-              <button class="w-full mt-4 bg-gray-700 hover:bg-gray-600 py-2 rounded-lg text-sm"><i class="fas fa-edit mr-2"></i>编辑</button>
+              
+              <!-- 游戏限额明细 -->
+              <div class="space-y-2 text-sm">
+                <div class="flex justify-between items-center p-2 bg-gray-700 rounded">
+                  <span class="flex items-center">
+                    <i class="fas fa-chess text-yellow-400 mr-2"></i>百家乐
+                  </span>
+                  <span class="font-mono text-green-400">${formatCurrency(baccaratLimits.min)} - ${formatCurrency(baccaratLimits.max)}</span>
+                </div>
+                <div class="flex justify-between items-center p-2 bg-gray-700 rounded">
+                  <span class="flex items-center">
+                    <i class="fas fa-dragon text-red-400 mr-2"></i>龙虎
+                  </span>
+                  <span class="font-mono text-green-400">${formatCurrency(dragonTigerLimits.min)} - ${formatCurrency(dragonTigerLimits.max)}</span>
+                </div>
+                <div class="flex justify-between items-center p-2 bg-gray-700 rounded">
+                  <span class="flex items-center">
+                    <i class="fas fa-circle-notch text-blue-400 mr-2"></i>轮盘
+                  </span>
+                  <span class="font-mono text-green-400">${formatCurrency(rouletteLimits.min)} - ${formatCurrency(rouletteLimits.max)}</span>
+                </div>
+                <div class="flex justify-between items-center p-2 bg-gray-700 rounded">
+                  <span class="flex items-center">
+                    <i class="fas fa-dice text-purple-400 mr-2"></i>骰宝
+                  </span>
+                  <span class="font-mono text-green-400">${formatCurrency(sicboLimits.min)} - ${formatCurrency(sicboLimits.max)}</span>
+                </div>
+                <div class="flex justify-between items-center p-2 bg-gray-700 rounded">
+                  <span class="flex items-center">
+                    <i class="fas fa-cow text-orange-400 mr-2"></i>牛牛
+                  </span>
+                  <span class="font-mono text-green-400">${formatCurrency(niuniuLimits.min)} - ${formatCurrency(niuniuLimits.max)}</span>
+                </div>
+              </div>
+              
+              <!-- 使用统计 -->
+              <div class="mt-4 pt-4 border-t border-gray-700 flex justify-between text-xs text-gray-400">
+                <span><i class="fas fa-users mr-1"></i>绑定玩家: ${g.player_count || 0}</span>
+                <span><i class="fas fa-table mr-1"></i>绑定桌台: ${g.table_count || 0}</span>
+              </div>
             </div>
           `;
         }).join('')}
+        
+        <!-- 新增限红组卡片 -->
+        <div onclick="showAddLimitGroupModal()" class="bg-gray-800 rounded-xl p-5 border-2 border-dashed border-gray-600 flex flex-col items-center justify-center cursor-pointer hover:border-primary hover:bg-gray-750 transition-all min-h-[400px]">
+          <i class="fas fa-plus-circle text-5xl text-gray-500 mb-3"></i>
+          <p class="text-gray-400 text-lg font-medium">新增限红组</p>
+          <p class="text-xs text-gray-500 mt-2">点击创建新的限额配置方案</p>
+        </div>
       </div>
     </div>
     
@@ -7150,6 +7221,435 @@ async function deleteRiskRule(id, name) {
   if (result.success) {
     alert('规则已删除');
     loadRiskRules();
+  } else {
+    alert('删除失败: ' + result.error);
+  }
+}
+
+// =====================
+// 限红组管理函数
+// =====================
+function showAddLimitGroupModal() {
+  const modalHtml = `
+    <div id="limit-group-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onclick="if(event.target===this) closeLimitGroupModal()">
+      <div class="bg-gray-800 rounded-xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="text-2xl font-bold"><i class="fas fa-plus-circle text-primary mr-2"></i>新增限红组</h3>
+          <button onclick="closeLimitGroupModal()" class="text-gray-400 hover:text-white text-2xl">&times;</button>
+        </div>
+        
+        <form id="limit-group-form" onsubmit="submitLimitGroup(event)">
+          <!-- 基本信息 -->
+          <div class="mb-6">
+            <h4 class="text-lg font-semibold mb-4 text-gray-300">基本信息</h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-gray-400 text-sm mb-2">组名称 <span class="text-red-400">*</span></label>
+                <input type="text" name="group_name" required placeholder="如：VIP会员限红组" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-primary">
+              </div>
+              <div>
+                <label class="block text-gray-400 text-sm mb-2">状态</label>
+                <select name="status" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-primary">
+                  <option value="1">启用</option>
+                  <option value="0">禁用</option>
+                </select>
+              </div>
+              <div class="md:col-span-2">
+                <label class="block text-gray-400 text-sm mb-2">描述</label>
+                <textarea name="description" placeholder="描述此限红组的适用范围和规则" rows="2" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-primary"></textarea>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 游戏限额配置 -->
+          <div class="mb-6">
+            <h4 class="text-lg font-semibold mb-4 text-gray-300">
+              <i class="fas fa-gamepad text-primary mr-2"></i>游戏限额配置
+            </h4>
+            
+            <!-- 百家乐 -->
+            <div class="bg-gray-700 rounded-lg p-4 mb-3">
+              <div class="flex items-center mb-3">
+                <i class="fas fa-chess text-yellow-400 text-xl mr-3"></i>
+                <h5 class="font-semibold text-lg">百家乐</h5>
+              </div>
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-gray-400 text-sm mb-2">最小投注额</label>
+                  <input type="number" name="baccarat_min" value="10" min="1" step="1" class="w-full bg-gray-600 border border-gray-500 rounded-lg px-4 py-2 focus:outline-none focus:border-primary">
+                </div>
+                <div>
+                  <label class="block text-gray-400 text-sm mb-2">最大投注额</label>
+                  <input type="number" name="baccarat_max" value="50000" min="1" step="1" class="w-full bg-gray-600 border border-gray-500 rounded-lg px-4 py-2 focus:outline-none focus:border-primary">
+                </div>
+              </div>
+            </div>
+            
+            <!-- 龙虎 -->
+            <div class="bg-gray-700 rounded-lg p-4 mb-3">
+              <div class="flex items-center mb-3">
+                <i class="fas fa-dragon text-red-400 text-xl mr-3"></i>
+                <h5 class="font-semibold text-lg">龙虎</h5>
+              </div>
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-gray-400 text-sm mb-2">最小投注额</label>
+                  <input type="number" name="dragon_tiger_min" value="10" min="1" step="1" class="w-full bg-gray-600 border border-gray-500 rounded-lg px-4 py-2 focus:outline-none focus:border-primary">
+                </div>
+                <div>
+                  <label class="block text-gray-400 text-sm mb-2">最大投注额</label>
+                  <input type="number" name="dragon_tiger_max" value="30000" min="1" step="1" class="w-full bg-gray-600 border border-gray-500 rounded-lg px-4 py-2 focus:outline-none focus:border-primary">
+                </div>
+              </div>
+            </div>
+            
+            <!-- 轮盘 -->
+            <div class="bg-gray-700 rounded-lg p-4 mb-3">
+              <div class="flex items-center mb-3">
+                <i class="fas fa-circle-notch text-blue-400 text-xl mr-3"></i>
+                <h5 class="font-semibold text-lg">轮盘</h5>
+              </div>
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-gray-400 text-sm mb-2">最小投注额</label>
+                  <input type="number" name="roulette_min" value="5" min="1" step="1" class="w-full bg-gray-600 border border-gray-500 rounded-lg px-4 py-2 focus:outline-none focus:border-primary">
+                </div>
+                <div>
+                  <label class="block text-gray-400 text-sm mb-2">最大投注额</label>
+                  <input type="number" name="roulette_max" value="20000" min="1" step="1" class="w-full bg-gray-600 border border-gray-500 rounded-lg px-4 py-2 focus:outline-none focus:border-primary">
+                </div>
+              </div>
+            </div>
+            
+            <!-- 骰宝 -->
+            <div class="bg-gray-700 rounded-lg p-4 mb-3">
+              <div class="flex items-center mb-3">
+                <i class="fas fa-dice text-purple-400 text-xl mr-3"></i>
+                <h5 class="font-semibold text-lg">骰宝</h5>
+              </div>
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-gray-400 text-sm mb-2">最小投注额</label>
+                  <input type="number" name="sicbo_min" value="5" min="1" step="1" class="w-full bg-gray-600 border border-gray-500 rounded-lg px-4 py-2 focus:outline-none focus:border-primary">
+                </div>
+                <div>
+                  <label class="block text-gray-400 text-sm mb-2">最大投注额</label>
+                  <input type="number" name="sicbo_max" value="10000" min="1" step="1" class="w-full bg-gray-600 border border-gray-500 rounded-lg px-4 py-2 focus:outline-none focus:border-primary">
+                </div>
+              </div>
+            </div>
+            
+            <!-- 牛牛 -->
+            <div class="bg-gray-700 rounded-lg p-4">
+              <div class="flex items-center mb-3">
+                <i class="fas fa-cow text-orange-400 text-xl mr-3"></i>
+                <h5 class="font-semibold text-lg">牛牛</h5>
+              </div>
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-gray-400 text-sm mb-2">最小投注额</label>
+                  <input type="number" name="niuniu_min" value="10" min="1" step="1" class="w-full bg-gray-600 border border-gray-500 rounded-lg px-4 py-2 focus:outline-none focus:border-primary">
+                </div>
+                <div>
+                  <label class="block text-gray-400 text-sm mb-2">最大投注额</label>
+                  <input type="number" name="niuniu_max" value="20000" min="1" step="1" class="w-full bg-gray-600 border border-gray-500 rounded-lg px-4 py-2 focus:outline-none focus:border-primary">
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 提交按钮 -->
+          <div class="flex justify-end space-x-3">
+            <button type="button" onclick="closeLimitGroupModal()" class="px-6 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg">取消</button>
+            <button type="submit" class="px-6 py-2 bg-primary hover:bg-blue-700 rounded-lg">
+              <i class="fas fa-save mr-2"></i>保存
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  `;
+  
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+function closeLimitGroupModal() {
+  const modal = document.getElementById('limit-group-modal');
+  if (modal) modal.remove();
+}
+
+async function submitLimitGroup(event) {
+  event.preventDefault();
+  const form = event.target;
+  const formData = new FormData(form);
+  
+  const data = {
+    group_name: formData.get('group_name'),
+    description: formData.get('description') || '',
+    status: parseInt(formData.get('status')),
+    baccarat_limits: JSON.stringify({
+      min: parseFloat(formData.get('baccarat_min')),
+      max: parseFloat(formData.get('baccarat_max'))
+    }),
+    dragon_tiger_limits: JSON.stringify({
+      min: parseFloat(formData.get('dragon_tiger_min')),
+      max: parseFloat(formData.get('dragon_tiger_max'))
+    }),
+    roulette_limits: JSON.stringify({
+      min: parseFloat(formData.get('roulette_min')),
+      max: parseFloat(formData.get('roulette_max'))
+    }),
+    sicbo_limits: JSON.stringify({
+      min: parseFloat(formData.get('sicbo_min')),
+      max: parseFloat(formData.get('sicbo_max'))
+    }),
+    niuniu_limits: JSON.stringify({
+      min: parseFloat(formData.get('niuniu_min')),
+      max: parseFloat(formData.get('niuniu_max'))
+    })
+  };
+  
+  const result = await api('/api/risk/limit-groups', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  });
+  
+  if (result.success) {
+    alert('限红组创建成功');
+    closeLimitGroupModal();
+    loadModule('risk');
+  } else {
+    alert('创建失败: ' + result.error);
+  }
+}
+
+async function editLimitGroup(id) {
+  // 获取限红组详情
+  const result = await api(`/api/risk/limit-groups/${id}`);
+  if (!result.success) {
+    alert('获取限红组信息失败');
+    return;
+  }
+  
+  const group = result.data;
+  const baccaratLimits = JSON.parse(group.baccarat_limits || '{"min":10,"max":50000}');
+  const dragonTigerLimits = JSON.parse(group.dragon_tiger_limits || '{"min":10,"max":30000}');
+  const rouletteLimits = JSON.parse(group.roulette_limits || '{"min":5,"max":20000}');
+  const sicboLimits = JSON.parse(group.sicbo_limits || '{"min":5,"max":10000}');
+  const niuniuLimits = JSON.parse(group.niuniu_limits || '{"min":10,"max":20000}');
+  
+  const modalHtml = `
+    <div id="limit-group-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onclick="if(event.target===this) closeLimitGroupModal()">
+      <div class="bg-gray-800 rounded-xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="text-2xl font-bold"><i class="fas fa-edit text-primary mr-2"></i>编辑限红组</h3>
+          <button onclick="closeLimitGroupModal()" class="text-gray-400 hover:text-white text-2xl">&times;</button>
+        </div>
+        
+        <form id="limit-group-form" onsubmit="updateLimitGroup(event, ${id})">
+          <!-- 基本信息 -->
+          <div class="mb-6">
+            <h4 class="text-lg font-semibold mb-4 text-gray-300">基本信息</h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-gray-400 text-sm mb-2">组名称 <span class="text-red-400">*</span></label>
+                <input type="text" name="group_name" required value="${escapeHtml(group.group_name)}" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-primary">
+              </div>
+              <div>
+                <label class="block text-gray-400 text-sm mb-2">状态</label>
+                <select name="status" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-primary">
+                  <option value="1" ${group.status === 1 ? 'selected' : ''}>启用</option>
+                  <option value="0" ${group.status === 0 ? 'selected' : ''}>禁用</option>
+                </select>
+              </div>
+              <div class="md:col-span-2">
+                <label class="block text-gray-400 text-sm mb-2">描述</label>
+                <textarea name="description" rows="2" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-primary">${escapeHtml(group.description || '')}</textarea>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 游戏限额配置 -->
+          <div class="mb-6">
+            <h4 class="text-lg font-semibold mb-4 text-gray-300">
+              <i class="fas fa-gamepad text-primary mr-2"></i>游戏限额配置
+            </h4>
+            
+            <!-- 百家乐 -->
+            <div class="bg-gray-700 rounded-lg p-4 mb-3">
+              <div class="flex items-center mb-3">
+                <i class="fas fa-chess text-yellow-400 text-xl mr-3"></i>
+                <h5 class="font-semibold text-lg">百家乐</h5>
+              </div>
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-gray-400 text-sm mb-2">最小投注额</label>
+                  <input type="number" name="baccarat_min" value="${baccaratLimits.min}" min="1" step="1" class="w-full bg-gray-600 border border-gray-500 rounded-lg px-4 py-2 focus:outline-none focus:border-primary">
+                </div>
+                <div>
+                  <label class="block text-gray-400 text-sm mb-2">最大投注额</label>
+                  <input type="number" name="baccarat_max" value="${baccaratLimits.max}" min="1" step="1" class="w-full bg-gray-600 border border-gray-500 rounded-lg px-4 py-2 focus:outline-none focus:border-primary">
+                </div>
+              </div>
+            </div>
+            
+            <!-- 龙虎 -->
+            <div class="bg-gray-700 rounded-lg p-4 mb-3">
+              <div class="flex items-center mb-3">
+                <i class="fas fa-dragon text-red-400 text-xl mr-3"></i>
+                <h5 class="font-semibold text-lg">龙虎</h5>
+              </div>
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-gray-400 text-sm mb-2">最小投注额</label>
+                  <input type="number" name="dragon_tiger_min" value="${dragonTigerLimits.min}" min="1" step="1" class="w-full bg-gray-600 border border-gray-500 rounded-lg px-4 py-2 focus:outline-none focus:border-primary">
+                </div>
+                <div>
+                  <label class="block text-gray-400 text-sm mb-2">最大投注额</label>
+                  <input type="number" name="dragon_tiger_max" value="${dragonTigerLimits.max}" min="1" step="1" class="w-full bg-gray-600 border border-gray-500 rounded-lg px-4 py-2 focus:outline-none focus:border-primary">
+                </div>
+              </div>
+            </div>
+            
+            <!-- 轮盘 -->
+            <div class="bg-gray-700 rounded-lg p-4 mb-3">
+              <div class="flex items-center mb-3">
+                <i class="fas fa-circle-notch text-blue-400 text-xl mr-3"></i>
+                <h5 class="font-semibold text-lg">轮盘</h5>
+              </div>
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-gray-400 text-sm mb-2">最小投注额</label>
+                  <input type="number" name="roulette_min" value="${rouletteLimits.min}" min="1" step="1" class="w-full bg-gray-600 border border-gray-500 rounded-lg px-4 py-2 focus:outline-none focus:border-primary">
+                </div>
+                <div>
+                  <label class="block text-gray-400 text-sm mb-2">最大投注额</label>
+                  <input type="number" name="roulette_max" value="${rouletteLimits.max}" min="1" step="1" class="w-full bg-gray-600 border border-gray-500 rounded-lg px-4 py-2 focus:outline-none focus:border-primary">
+                </div>
+              </div>
+            </div>
+            
+            <!-- 骰宝 -->
+            <div class="bg-gray-700 rounded-lg p-4 mb-3">
+              <div class="flex items-center mb-3">
+                <i class="fas fa-dice text-purple-400 text-xl mr-3"></i>
+                <h5 class="font-semibold text-lg">骰宝</h5>
+              </div>
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-gray-400 text-sm mb-2">最小投注额</label>
+                  <input type="number" name="sicbo_min" value="${sicboLimits.min}" min="1" step="1" class="w-full bg-gray-600 border border-gray-500 rounded-lg px-4 py-2 focus:outline-none focus:border-primary">
+                </div>
+                <div>
+                  <label class="block text-gray-400 text-sm mb-2">最大投注额</label>
+                  <input type="number" name="sicbo_max" value="${sicboLimits.max}" min="1" step="1" class="w-full bg-gray-600 border border-gray-500 rounded-lg px-4 py-2 focus:outline-none focus:border-primary">
+                </div>
+              </div>
+            </div>
+            
+            <!-- 牛牛 -->
+            <div class="bg-gray-700 rounded-lg p-4">
+              <div class="flex items-center mb-3">
+                <i class="fas fa-cow text-orange-400 text-xl mr-3"></i>
+                <h5 class="font-semibold text-lg">牛牛</h5>
+              </div>
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-gray-400 text-sm mb-2">最小投注额</label>
+                  <input type="number" name="niuniu_min" value="${niuniuLimits.min}" min="1" step="1" class="w-full bg-gray-600 border border-gray-500 rounded-lg px-4 py-2 focus:outline-none focus:border-primary">
+                </div>
+                <div>
+                  <label class="block text-gray-400 text-sm mb-2">最大投注额</label>
+                  <input type="number" name="niuniu_max" value="${niuniuLimits.max}" min="1" step="1" class="w-full bg-gray-600 border border-gray-500 rounded-lg px-4 py-2 focus:outline-none focus:border-primary">
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 提交按钮 -->
+          <div class="flex justify-end space-x-3">
+            <button type="button" onclick="closeLimitGroupModal()" class="px-6 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg">取消</button>
+            <button type="submit" class="px-6 py-2 bg-primary hover:bg-blue-700 rounded-lg">
+              <i class="fas fa-save mr-2"></i>保存修改
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  `;
+  
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+async function updateLimitGroup(event, id) {
+  event.preventDefault();
+  const form = event.target;
+  const formData = new FormData(form);
+  
+  const data = {
+    group_name: formData.get('group_name'),
+    description: formData.get('description') || '',
+    status: parseInt(formData.get('status')),
+    baccarat_limits: JSON.stringify({
+      min: parseFloat(formData.get('baccarat_min')),
+      max: parseFloat(formData.get('baccarat_max'))
+    }),
+    dragon_tiger_limits: JSON.stringify({
+      min: parseFloat(formData.get('dragon_tiger_min')),
+      max: parseFloat(formData.get('dragon_tiger_max'))
+    }),
+    roulette_limits: JSON.stringify({
+      min: parseFloat(formData.get('roulette_min')),
+      max: parseFloat(formData.get('roulette_max'))
+    }),
+    sicbo_limits: JSON.stringify({
+      min: parseFloat(formData.get('sicbo_min')),
+      max: parseFloat(formData.get('sicbo_max'))
+    }),
+    niuniu_limits: JSON.stringify({
+      min: parseFloat(formData.get('niuniu_min')),
+      max: parseFloat(formData.get('niuniu_max'))
+    })
+  };
+  
+  const result = await api(`/api/risk/limit-groups/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data)
+  });
+  
+  if (result.success) {
+    alert('限红组更新成功');
+    closeLimitGroupModal();
+    loadModule('risk');
+  } else {
+    alert('更新失败: ' + result.error);
+  }
+}
+
+async function toggleLimitGroup(id, newStatus) {
+  const result = await api(`/api/risk/limit-groups/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify({ status: newStatus })
+  });
+  
+  if (result.success) {
+    alert(newStatus === 1 ? '限红组已启用' : '限红组已禁用');
+    loadModule('risk');
+  } else {
+    alert('操作失败: ' + result.error);
+  }
+}
+
+async function deleteLimitGroup(id, name) {
+  if (!confirm(`确定要删除限红组「${name}」吗？\n\n警告：删除后，所有绑定此限红组的玩家和桌台将恢复默认限额。此操作不可恢复！`)) return;
+  
+  const result = await api(`/api/risk/limit-groups/${id}`, {
+    method: 'DELETE'
+  });
+  
+  if (result.success) {
+    alert('限红组已删除');
+    loadModule('risk');
   } else {
     alert('删除失败: ' + result.error);
   }

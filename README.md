@@ -16,17 +16,23 @@
 ## 🌐 在线演示地址
 
 ### 系统总管理后台
-- **✅ 生产环境**: https://webapp-eqp.pages.dev/
-- **沙箱演示**: https://3000-iuwuqi7rz0v5niuhr74wf-cc2fbc16.sandbox.novita.ai/
-- 📧 **获取访问账号**: cnwen123@gmail.com
+- **✅ 生产环境**: https://online-app.pages.dev/
+- **账号**: `admin`
+- **密码**: `Qwer@1234`
 
-### 代理管理后台
-- **✅ 生产环境**: https://webapp-eqp.pages.dev/agent.html
-- **沙箱演示**: https://3000-iuwuqi7rz0v5niuhr74wf-cc2fbc16.sandbox.novita.ai/agent.html
-- 📧 **获取访问账号**: cnwen123@gmail.com
+### 代理管理后台（股东）
+- **✅ 生产环境**: https://online-app.pages.dev/agent.html
+- **账号**: `shareholder01`
+- **密码**: `Qwer@1234`
+
+### 代理管理后台（代理）
+- **✅ 生产环境**: https://online-app.pages.dev/agent.html
+- **账号**: `agent01`
+- **密码**: `Qwer@1234`
 
 > 🎉 **已部署**: 生产环境已成功部署到Cloudflare Pages，立即可用！  
-> ⚠️ **访问控制**: 如需获取生产环境账号密码，请发送邮件至 **cnwen123@gmail.com**
+> 🔒 **安全提示**: 首次登录后请立即修改密码并启用2FA双因素认证  
+> 📧 **技术支持**: cnwen123@gmail.com
 
 ---
 
@@ -105,9 +111,9 @@
 ## 二、代理管理后台
 
 ### 访问地址
-- **生产环境**: `https://webapp-eqp.pages.dev/agent.html`
-- **沙箱演示**: `https://3000-iuwuqi7rz0v5niuhr74wf-cc2fbc16.sandbox.novita.ai/agent.html`
-- 📧 **获取访问账号**: cnwen123@gmail.com
+- **生产环境**: `https://online-app.pages.dev/agent.html`
+- **股东账号**: `shareholder01` / `Qwer@1234`
+- **代理账号**: `agent01` / `Qwer@1234`
 
 ### 核心功能模块
 

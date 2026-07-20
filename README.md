@@ -16,23 +16,23 @@
 ## 🌐 在线演示地址
 
 ### 系统总管理后台
-- **✅ 生产环境**: https://online-app.pages.dev/
-- **账号**: `admin`
-- **密码**: `Qwer@1234`
+- **✅ 生产环境**: ——
+- **账号**: ——
+- **密码**: ——
 
 ### 代理管理后台（股东）
-- **✅ 生产环境**: https://online-app.pages.dev/agent.html
-- **账号**: `shareholder01`
-- **密码**: `Qwer@1234`
+- **✅ 生产环境**: ——
+- **账号**: ——
+- **密码**: ——
 
 ### 代理管理后台（代理）
-- **✅ 生产环境**: https://online-app.pages.dev/agent.html
-- **账号**: `agent01`
-- **密码**: `Qwer@1234`
+- **✅ 生产环境**: ——
+- **账号**: ——
+- **密码**: ——
 
-> 🎉 **已部署**: 生产环境已成功部署到Cloudflare Pages，立即可用！  
-> 🔒 **安全提示**: 首次登录后请立即修改密码并启用2FA双因素认证  
-> 📧 **技术支持**: cnwen123@gmail.com
+> 🎉 **已部署**: 生产环境已成功部署到Cloudflare Pages  
+> 🔒 **安全提示**: 系统已启用访问控制，请联系管理员获取访问权限  
+> 📧 **获取访问**: cnwen123@gmail.com
 
 ---
 
@@ -111,9 +111,8 @@
 ## 二、代理管理后台
 
 ### 访问地址
-- **生产环境**: `https://online-app.pages.dev/agent.html`
-- **股东账号**: `shareholder01` / `Qwer@1234`
-- **代理账号**: `agent01` / `Qwer@1234`
+- **生产环境**: ——
+- **访问权限**: 需联系管理员获取账号密码
 
 ### 核心功能模块
 
@@ -162,7 +161,7 @@
 ### 一键部署命令
 ```bash
 # 1. 克隆仓库
-git clone https://github.com/CNWEN123/backstage-01A.git
+git clone [仓库地址]
 cd backstage-01A
 
 # 2. 安装依赖
@@ -400,10 +399,10 @@ npm run deploy:prod
 
 ## 技术支持
 
-- **项目地址**: https://github.com/CNWEN123/backstage-01A
+- **项目地址**: [联系管理员获取]
 - **开发团队**: Owen's Team
-- **联系邮箱**: cnwen123@gmail.com (获取访问账号密码)
-- **更新时间**: 2024-12-01
+- **联系邮箱**: cnwen123@gmail.com
+- **更新时间**: 2025-12-16
 
 ---
 
